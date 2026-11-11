@@ -3,11 +3,14 @@
 ## Etappe 0 – Grundlagen
 - [x] Repo
 - [x] Doku-Gerüst
-- [ ] Secrets-Konzept
-- [ ] Alte Zugangsdaten der 1.0 prüfen
+- [x] Secrets-Konzept
+- [x] Alte Zugangsdaten der 1.0 prüfen
 - [ ] Technik-Entscheidung Dashboard
 
 ## Etappe 1 – Pod-Startskript
+- [ ] GitHub-Lese-Token für dreamdeck anlegen (fine-grained, nur Contents: Read)
+- [ ] rclone-Drive-Token einmalig lokal erzeugen (Scope drive.file)
+- [ ] Secrets in RunPod anlegen
 - [ ] Pod-Startskript (git clone, ComfyUI, Modelle, LoRAs, rclone)
 
 ## Etappe 2 – Dashboard-MVP
