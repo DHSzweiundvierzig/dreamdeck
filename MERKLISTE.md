@@ -5,7 +5,7 @@
 - [x] Doku-Gerüst
 - [x] Secrets-Konzept
 - [x] Alte Zugangsdaten der 1.0 prüfen
-- [ ] Technik-Entscheidung Dashboard
+- [x] Technik-Entscheidung Dashboard
 
 ## Etappe 1 – Pod-Startskript
 - [ ] GitHub-Lese-Token für dreamdeck anlegen (fine-grained, nur Contents: Read)
@@ -14,6 +14,7 @@
 - [ ] Pod-Startskript (git clone, ComfyUI, Modelle, LoRAs, rclone)
 
 ## Etappe 2 – Dashboard-MVP
+- [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox
 - [ ] Dashboard-MVP
 
 ## Etappe 3 – Galerie & Metadaten
