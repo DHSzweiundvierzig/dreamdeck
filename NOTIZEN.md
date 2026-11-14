@@ -18,6 +18,9 @@
 
   - GITHUB_TOKEN ist ein eigener fine-grained Token nur für dreamdeck mit nur Lesezugriff (Contents: Read), getrennt vom Token der devbox. Grund: Wird er bekannt, kann niemand etwas verändern.
   - rclone bekommt nur Zugriff auf selbst angelegte Dateien (Drive-Scope `drive.file`). Grund: DreamDeck kann den Rest des Drives weder lesen noch löschen.
+  - GITHUB_TOKEN läuft am 15.05.2027 ab.
+  - CIVITAI_TOKEN nutzt das Civitai-Preset „Read Only“. Grund: Der Pod muss nur LoRAs laden. Für den Upload in Phase 5 wird ein eigener Key mit passenden Schreibrechten angelegt, dieser hier wird nicht erweitert.
+  - RCLONE_DRIVE_TOKEN liegt base64-kodiert vor (so gibt `rclone authorize` den Token aus). Das Startskript muss ihn vor der Nutzung auspacken.
   - Kein HF_TOKEN nötig, solange FLUX aus der frei zugänglichen Comfy-Org-Kopie auf Hugging Face geladen wird.
 - **LoRA-Bibliothek als Datei im Repo, ohne Token; der Pod lädt beim Start per Civitai-Secret** – Liste ist versionierbar, der Zugang bleibt geheim.
 - **Formate als Presets um ca. 1 MP, Auflösung immer durch 16 teilbar, über 2 MP Warnung** – passt zu den Modellen, vermeidet Fehler und Speicherprobleme.
@@ -25,6 +28,9 @@
 - **Oberfläche nach Entwurf „Variante B“** – Pipeline-Boxen 1–5 oben, Prompt-Leiste, Bühne mit Verlauf rechts, Einstellungsseite.
 - **Bezeichner im Code auf Englisch, Doku und Kommentare auf Deutsch** – vorläufig, solange nichts anderes kommt.
 - **ngrok aus der 1.0 wird nicht mehr genutzt** – Authtoken am 11.11.2026 rotiert.
+- **14.11.2026 – Claude Code läuft mit dem Firmenkonto** – bewusste Entscheidung, so gewünscht.
+- **14.11.2026 – Ablage im Google Drive: Ordner `DreamDeck/JJJJ-MM/`, Dateinamen `JJJJ-MM-TT_hhmmss_NNNNN.png`** – Gründe: wenige Ordner, chronologische Sortierung, und der Bildzähler von ComfyUI startet bei jedem frischen Pod wieder bei 00001; ohne Zeitstempel würden sich Dateinamen doppeln.
+  - Den Ordner `DreamDeck` legt rclone selbst an. Wegen Scope `drive.file` sieht rclone keine von Hand angelegten Ordner.
 - **Technik Dashboard**
   - Backend: Python mit FastAPI, uvicorn und httpx. Grund: gleiche Sprache wie ComfyUI; FastAPI baut auf Starlette auf, das auch im GW2-Dashboard läuft.
   - Verbindung zu ComfyUI: HTTP für Aufträge und Bilder, Websocket-Client für den Fortschritt. Grund: ComfyUI meldet Fortschritt nur per Websocket.
