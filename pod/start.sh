@@ -19,6 +19,8 @@ LOG_FILE=$LOG_DIR/start.log
 REPO_URL=https://github.com/DHSzweiundvierzig/dreamdeck.git
 COMFY_DIR=/workspace/ComfyUI
 COMFY_REPO=https://github.com/Comfy-Org/ComfyUI.git
+OUTPUT_DIR=/workspace/output
+COMFY_PORT=8188
 
 # --- Protokoll ----------------------------------------------------------
 mkdir -p "$LOG_DIR"
@@ -145,6 +147,40 @@ print("GPU:", torch.cuda.get_device_name(0))
     fi
 }
 
+# ComfyUI im Hintergrund starten, nur auf 127.0.0.1 erreichbar (--listen wird
+# bewusst ausdrücklich gesetzt). Bilder liegen außerhalb des ComfyUI-Ordners,
+# weil ein Versionswechsel diesen Ordner löscht. Wartet höchstens 180 s,
+# bis /system_stats antwortet.
+step_start_comfyui() {
+    local pid waited=0
+    mkdir -p "$OUTPUT_DIR" || return 1
+    nohup python3 "$COMFY_DIR/main.py" --listen 127.0.0.1 --port "$COMFY_PORT" \
+        --output-directory "$OUTPUT_DIR" > "$LOG_DIR/comfyui.log" 2>&1 &
+    pid=$!
+    log "ComfyUI gestartet (PID $pid), Protokoll: $LOG_DIR/comfyui.log"
+
+    while [ "$waited" -lt 180 ]; do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            log "ComfyUI wurde vorzeitig beendet – siehe $LOG_DIR/comfyui.log"
+            return 1
+        fi
+        if python3 -c '
+import sys, urllib.request
+try:
+    urllib.request.urlopen(sys.argv[1], timeout=3)
+except Exception:
+    sys.exit(1)
+' "http://127.0.0.1:$COMFY_PORT/system_stats"; then
+            log "ComfyUI läuft auf 127.0.0.1:$COMFY_PORT"
+            return 0
+        fi
+        sleep 5
+        waited=$((waited + 5))
+    done
+    log "ComfyUI antwortet nach 180 s nicht – siehe $LOG_DIR/comfyui.log"
+    return 1
+}
+
 # --- Ablauf -------------------------------------------------------------
 log "DreamDeck-Start beginnt"
 
@@ -164,8 +200,9 @@ run_step "ComfyUI ${COMFYUI_VERSION:-?} installieren" step_install_comfyui
 run_step "GPU prüfen" step_check_gpu
 run_step "Modelle laden" step_download_models
 run_step "LoRAs laden" step_download_loras
+run_step "ComfyUI starten" step_start_comfyui
 
-# Hier folgen die Schritte aus 1f–1g (ComfyUI starten, rclone).
+# Hier folgt der Schritt aus 1g (rclone).
 
 # --- Abschluss ----------------------------------------------------------
 if [ "$SETUP_FAILED" -eq 0 ]; then

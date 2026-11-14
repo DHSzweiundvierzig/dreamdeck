@@ -29,7 +29,8 @@
 - **Bezeichner im Code auf Englisch, Doku und Kommentare auf Deutsch** – vorläufig, solange nichts anderes kommt.
 - **ngrok aus der 1.0 wird nicht mehr genutzt** – Authtoken am 11.11.2026 rotiert.
 - **14.11.2026 – Claude Code läuft mit dem Firmenkonto** – bewusste Entscheidung, so gewünscht.
-- **14.11.2026 – Ablage im Google Drive: Ordner `DreamDeck/JJJJ-MM/`, Dateinamen `JJJJ-MM-TT_hhmmss_NNNNN.png`** – Gründe: wenige Ordner, chronologische Sortierung, und der Bildzähler von ComfyUI startet bei jedem frischen Pod wieder bei 00001; ohne Zeitstempel würden sich Dateinamen doppeln.
+- **14.11.2026 – Ablage im Google Drive: Ordner `DreamDeck/JJJJ-MM/`, Dateinamen `JJJJ-MM-TT_hhmmss_NNNNN_.png`** (ComfyUI hängt immer `_NNNNN_` an) – Gründe: wenige Ordner, chronologische Sortierung, und der Bildzähler von ComfyUI startet bei jedem frischen Pod wieder bei 00001; ohne Zeitstempel würden sich Dateinamen doppeln.
+  - Ordner und Zeitstempel stecken im `filename_prefix` beim Speichern (z. B. `2026-11/2026-11-14_153012`). Ab Etappe 2 setzt ihn das Dashboard, im Testlauf werden Platzhalter in der ComfyUI-Oberfläche genutzt. rclone spiegelt nur. Grund: Die Bilder bleiben dort, wo ComfyUI sie kennt (wichtig für Galerie und „Nochmal“).
   - Den Ordner `DreamDeck` legt rclone selbst an. Wegen Scope `drive.file` sieht rclone keine von Hand angelegten Ordner.
 - **Technik Dashboard**
   - Backend: Python mit FastAPI, uvicorn und httpx. Grund: gleiche Sprache wie ComfyUI; FastAPI baut auf Starlette auf, das auch im GW2-Dashboard läuft.
@@ -56,3 +57,4 @@
   - Regeln: nur Typ LoRA, nur Basismodell Flux.1 D, nur SafeTensor. Alles andere wird abgelehnt.
   - Der Token kommt nur aus der Umgebung (`CIVITAI_TOKEN`), nie als Argument – Kommandozeilen sind für andere Prozesse sichtbar.
   - Alle Anfragen senden den User-Agent `DreamDeck/1.0`.
+- **14.11.2026 – Bildablage außerhalb von ComfyUI: `/workspace/output` per `--output-directory`** – Grund: `step_install_comfyui` löscht `/workspace/ComfyUI` bei einem Versionswechsel.
