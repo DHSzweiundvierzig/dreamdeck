@@ -1,8 +1,8 @@
-# ARCHITEKTUR (alles geplant, nichts umgesetzt)
+# ARCHITEKTUR (Pod-Startskript als Gerüst umgesetzt, alles andere geplant)
 
 Keine Ordnerstruktur festgelegt; sie ergibt sich bei der Umsetzung.
 
-- **Pod-Startskript** (geplant): richtet einen frischen RunPod-Pod ein – Repo klonen, ComfyUI installieren, Modelle und LoRAs laden, rclone konfigurieren.
+- **Pod-Startskript** (Gerüst umgesetzt): richtet einen frischen RunPod-Pod ein – Repo klonen, ComfyUI installieren, Modelle und LoRAs laden, rclone konfigurieren. Liegt im Ordner `pod/` (`pod/start.sh`). Der Startbefehl der RunPod-Vorlage klont das Repo und ruft `pod/start.sh` auf. Alle Schritte laufen über die gemeinsame Funktion `run_step` (Protokoll, Dauer, Fehlerbehandlung; nach dem ersten Fehler werden weitere Schritte übersprungen). Protokoll: `/workspace/logs/start.log`. Bei einem Fehler bleibt der Pod erreichbar (`sleep infinity`, RunPod-Dienste laufen im Hintergrund). Bisher enthalten: Repo absichern, Secrets prüfen; ComfyUI, Modelle, LoRAs und rclone folgen in 1c–1f.
 - **ComfyUI headless** (geplant): läuft ohne eigene Oberfläche als Bildmotor und wird über die ComfyUI-API angesprochen.
 - **DreamDeck-Backend** (geplant): vermittelt zwischen Oberfläche und ComfyUI-API, verwaltet Verlauf und Metadaten, liest Secrets nur aus Umgebungsvariablen. Technik: Python, FastAPI, uvicorn, httpx; ComfyUI per HTTP (Aufträge, Bilder) und Websocket-Client (Fortschritt); Fortschritt an die Oberfläche per Server-Sent Events, sonst fetch; nur DreamDeck von außen erreichbar, ComfyUI nur intern; Tests auf der devbox mit Spiel-ComfyUI (Fake-Bilder).
 - **Oberfläche** (geplant): nach Entwurf „Variante B“ – Pipeline-Boxen 1–5, Prompt-Leiste, Bühne mit Verlauf, Einstellungsseite (zeigt nur den Status der Secrets). Technik: schlichtes HTML/CSS/JS ohne Build-Schritt, ES-Module statt globaler Variablen; Alpine.js (fest im Repo, Version in Etappe 2 gepinnt) für Step-Boxen und LoRA-Liste; Live-Fortschritt per Server-Sent Events.

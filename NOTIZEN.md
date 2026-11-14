@@ -19,7 +19,7 @@
   - GITHUB_TOKEN ist ein eigener fine-grained Token nur für dreamdeck mit nur Lesezugriff (Contents: Read), getrennt vom Token der devbox. Grund: Wird er bekannt, kann niemand etwas verändern.
   - rclone bekommt nur Zugriff auf selbst angelegte Dateien (Drive-Scope `drive.file`). Grund: DreamDeck kann den Rest des Drives weder lesen noch löschen.
   - GITHUB_TOKEN läuft am 15.05.2027 ab.
-  - CIVITAI_TOKEN nutzt das Civitai-Preset „Read Only“. Grund: Der Pod muss nur LoRAs laden. Für den Upload in Phase 5 wird ein eigener Key mit passenden Schreibrechten angelegt, dieser hier wird nicht erweitert.
+  - CIVITAI_TOKEN nutzt das Civitai-Preset „Read Only“. Grund: Der Pod muss nur LoRAs laden. Für den Upload in Etappe 5 wird ein eigener Key mit passenden Schreibrechten angelegt, dieser hier wird nicht erweitert.
   - RCLONE_DRIVE_TOKEN liegt base64-kodiert vor (so gibt `rclone authorize` den Token aus). Das Startskript muss ihn vor der Nutzung auspacken.
   - Kein HF_TOKEN nötig, solange FLUX aus der frei zugänglichen Comfy-Org-Kopie auf Hugging Face geladen wird.
 - **LoRA-Bibliothek als Datei im Repo, ohne Token; der Pod lädt beim Start per Civitai-Secret** – Liste ist versionierbar, der Zugang bleibt geheim.
@@ -39,3 +39,10 @@
   - Alpine.js für die datengetriebenen Bereiche (Step-Boxen, LoRA-Liste). Die Datei liegt fest im Repo statt per CDN, Version wird beim Einbinden in Etappe 2 festgelegt und gepinnt. Grund: Oberfläche aktualisiert sich aus den Daten von selbst; kein Build nötig.
   - Live-Fortschritt per Server-Sent Events, alles andere per fetch. Grund: Fortschritt ändert sich mehrmals pro Sekunde, Polling wäre zu träge.
   - Tests auf der devbox ohne GPU mit einem Spiel-ComfyUI, das Fake-Bilder liefert. Grund: Der teure Pod wird erst gebraucht, wenn es ernst wird.
+- **14.11.2026 – Basis-Image: schlankes RunPod-PyTorch-Image, ComfyUI installiert unser Skript selbst in fester Version** (Version in einer Datei im Repo, Update nur bewusst) – Gründe: volle Kontrolle, jeder Schritt lesbar; die Startzeit bestimmen ohnehin die Modelle; fertige ComfyUI-Images machen ComfyUI oft öffentlich erreichbar. Konkretes Image und ComfyUI-Version werden in 1c festgelegt. Eigenes Image als Idee in Etappe 6.
+- **14.11.2026 – Branch des Pods über `DREAMDECK_BRANCH`, Standard `main`** – Grund: Testläufe vor dem Merge.
+- **14.11.2026 – RunPod-Dienste (Web-Terminal, SSH, Jupyter) laufen in Etappe 1 mit** – Grund: Fehlersuche. Ob sie abgeschaltet werden, wird in Etappe 2 entschieden.
+- **14.11.2026 – Token-Hygiene im Startskript** – Das Skript entfernt den Token aus der Git-Adresse und löscht `GITHUB_TOKEN` aus der Umgebung.
+  - Reihenfolge: Repo absichern läuft vor den RunPod-Diensten, damit `/start.sh` den Token nicht erbt. Die RunPod-Ausgabe landet in `/workspace/logs/runpod.log`.
+  - Schutzziel sind Kindprozesse (ComfyUI, Erweiterungen, Dashboard). Wer per Web-Terminal oder SSH auf dem Pod ist, ist root und kann die Startumgebung ohnehin lesen – das ist bewusst akzeptiert, Zugang hat nur, wer ins RunPod-Konto kommt.
+  - Der Fallback im Startbefehl (Klonen fehlgeschlagen) läuft ohne `unset`. Akzeptiert, weil dort nur die RunPod-Dienste laufen, keine Kindprozesse von DreamDeck.

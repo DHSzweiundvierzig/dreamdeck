@@ -1,20 +1,15 @@
-# BERICHT – Schritt 1a: Doku-Nachträge nach den Vorarbeiten
+# BERICHT – Schritt 1b Nachbesserung: Reihenfolge und eigenes Protokoll für RunPod-Dienste
 
 ## Geändert
-- MERKLISTE.md (Etappe 1): GitHub-Lese-Token, rclone-Drive-Token und Secrets in RunPod mit [x] abgehakt.
-- MERKLISTE.md: Unterschritte 1a–1f eingefügt, 1a abgehakt, 1b–1f offen.
-- MERKLISTE.md (Etappe 6 – Ideen-Parkplatz): Punkt „Eigene Google-Client-ID für rclone“ ergänzt.
-- NOTIZEN.md: drei Ergänzungen (GITHUB_TOKEN-Ablauf, CIVITAI_TOKEN „Read Only“, RCLONE_DRIVE_TOKEN base64) und zwei neue Einträge vom 14.11.2026 (Firmenkonto, Drive-Ablage).
-- ANLEITUNG.md: neuer Abschnitt „Zugänge erneuern“ (GitHub-Token, rclone-Token, Hinweis zum Drive-Ordner).
-- Kein Programmcode geschrieben.
+- `pod/start.sh` („# --- Ablauf“): Reihenfolge jetzt log „DreamDeck-Start beginnt“ → Repo absichern → RunPod-Dienste starten → Secrets prüfen → Platzhalter-Kommentar. Kommentar „Erst nach dem Absichern starten, damit die Dienste GITHUB_TOKEN nicht erben.“ ergänzt. Aufruf jetzt `/start.sh > "$LOG_DIR/runpod.log" 2>&1 &`, log-Zeile um „(Ausgabe in runpod.log)“ ergänzt. Funktionen und `run_step` unverändert.
+- NOTIZEN.md: bestehender Eintrag „Token-Hygiene im Startskript“ (14.11.2026) um zwei Unterpunkte ergänzt (Schutzziel Kindprozesse, Fallback ohne `unset`); keine neuen Einträge.
+- ANLEITUNG.md, „Pod starten“, „Protokoll ansehen“: zweite Zeile im Codeblock ergänzt, als Kommentar: `# RunPod-Dienste: tail -f /workspace/logs/runpod.log`.
 
-## Ergänzt statt neu angelegt
-- NOTIZEN.md: Die drei Token-Punkte stehen als Unterpunkte im bestehenden Eintrag „Secrets nur als RunPod-Secrets“, vor dem HF_TOKEN-Hinweis.
-- MERKLISTE.md: Der vorhandene Punkt „Pod-Startskript (git clone, ComfyUI, Modelle, LoRAs, rclone)“ blieb als Oberpunkt stehen (offen); 1b–1f sind als Unterpunkte darunter eingerückt, damit nichts doppelt ist.
+## Prüfung
+- `bash -n pod/start.sh`: Exit 0, keine Ausgabe (Syntax in Ordnung). Nichts ausgeführt.
 
 ## Auffälligkeiten
-- Grep nach „Konto“/„Firmenkonto“ in MERKLISTE.md: kein Treffer, also kein offener Punkt zum Claude-Code-Konto, nichts abzuhaken (Schritt 2 entfällt). Die Entscheidung steht nun in NOTIZEN.md.
-- ANLEITUNG.md hatte keinen Abschnitt zu Zugängen/Secrets, daher „Zugänge erneuern“ neu angelegt (vor „Pod beenden“ steht weiterhin der Platzhalter, der neue Abschnitt folgt am Ende).
-- In der MERKLISTE heißt der Ideen-Abschnitt „Etappe 6 – Ideen-Parkplatz“; in der Vorgabe stand „Phase 6“. Dort eingetragen. Die NOTIZEN-Vorgabe spricht beim Civitai-Upload von „Phase 5“, in der MERKLISTE ist das „Etappe 5 – Civitai-Anbindung“; Wortlaut der Vorgabe übernommen.
-- Kein Grep-Werkzeug verfügbar, Suche per `grep` über Bash (nur lesend).
-- Es wurde nichts committet.
+- Der Token-Schutz für RunPod-Dienste wirkt nur, weil `unset GITHUB_TOKEN` in `step_secure_repo` in der Hauptshell läuft; das ist jetzt vor dem Start der Dienste der Fall. Nicht im Test verifiziert.
+- Der Startbefehl-Fallback (`/start.sh & sleep infinity`, Klon-Fehler) läuft ohne `unset` und startet die RunPod-Dienste mit `GITHUB_TOKEN` in der Umgebung. Laut Vorgabe akzeptiert und dokumentiert, nicht geändert.
+- Die Zeile in ANLEITUNG.md steht als Kommentar (`# …`) im Codeblock, damit sie per Copy-Paste keinen Fehler auslöst.
+- Nichts committet.

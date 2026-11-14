@@ -13,15 +13,17 @@
 - [x] Secrets in RunPod anlegen
 - [ ] Pod-Startskript (git clone, ComfyUI, Modelle, LoRAs, rclone) – Unterschritte:
   - [x] 1a Doku-Nachträge nach den Vorarbeiten
-  - [ ] 1b Startskript-Gerüst, Startbefehl für die RunPod-Vorlage (Repo per GITHUB_TOKEN klonen), ComfyUI installieren – vorher Basis-Image entscheiden
-  - [ ] 1c Modelle laden (FLUX.1 [dev], T5, CLIP-L, VAE, Upscaler), vorhandene überspringen
-  - [ ] 1d LoRAs von Civitai laden, Liste im Repo pflegbar
-  - [ ] 1e ComfyUI im Hintergrund starten, rclone einrichten (Token auspacken, Monatsordner, Dateinamen mit Zeitstempel)
-  - [ ] 1f Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt
+  - [x] 1b Startskript-Gerüst, Startbefehl für die RunPod-Vorlage
+  - [ ] 1c Basis-Image und ComfyUI-Version festlegen, ComfyUI installieren
+  - [ ] 1d Modelle laden (FLUX.1 [dev], T5, CLIP-L, VAE, Upscaler), vorhandene überspringen
+  - [ ] 1e LoRAs von Civitai laden, Liste im Repo pflegbar
+  - [ ] 1f ComfyUI im Hintergrund starten, rclone einrichten (Token auspacken, Monatsordner, Dateinamen mit Zeitstempel)
+  - [ ] 1g Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt
 
 ## Etappe 2 – Dashboard-MVP
 - [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox
 - [ ] Dashboard-MVP
+- [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten
@@ -38,6 +40,7 @@
 - [ ] Bild-zu-Bild
 - [ ] Vergleichsansicht
 - [ ] Serverless
+- [ ] Eigenes Pod-Image (schnellerer Start)
 - [ ] Tastatur-Kürzel 1–5
 - [ ] Markierung geänderter Werte
 - [ ] Eigene Google-Client-ID für rclone, falls die geteilte Client-ID von rclone gedrosselt wird
