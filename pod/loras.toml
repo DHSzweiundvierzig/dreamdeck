@@ -1,0 +1,16 @@
+# LoRAs für den Pod.
+#
+# Zweck: LoRAs, die beim Pod-Start geladen werden – bewusst klein halten,
+# weitere LoRAs später übers Dashboard.
+# Gelesen wird die Datei von pod/models.py (Befehl „loras“).
+#
+# Pflege: nur die Civitai-Versionsnummer eintragen. Auf der Modellseite die
+# Version wählen, die Zahl hinter modelVersionId= in der Adresse ist die
+# Versionsnummer. Den Namen als Kommentar dahinter schreiben.
+#
+# Regeln:
+# - nur LoRA, nur Basismodell Flux.1 D, nur SafeTensor.
+# - Dateiname, Größe und Prüfsumme kommen automatisch von Civitai.
+
+[[loras]]
+version_id = 1051416  # PsyDreamer Style [FLUX] – FLUX_PsyDreamer_V0.1 (eigene LoRA, Triggerwort „PsyDreamer“)

@@ -123,6 +123,12 @@ step_download_models() {
     python3 "$REPO_DIR/pod/models.py" download --sets "$MODEL_SETS" --models-dir "$COMFY_DIR/models" || return 1
 }
 
+# LoRAs aus pod/loras.toml laden. Der Token kommt aus der Umgebung (CIVITAI_TOKEN),
+# nie als Argument.
+step_download_loras() {
+    python3 "$REPO_DIR/pod/models.py" loras --models-dir "$COMFY_DIR/models" || return 1
+}
+
 # Prüft, ob PyTorch die GPU sieht. Ohne GPU schlägt der Schritt fehl.
 step_check_gpu() {
     if ! python3 -c '
@@ -157,8 +163,9 @@ run_step "Secrets prüfen" step_check_secrets
 run_step "ComfyUI ${COMFYUI_VERSION:-?} installieren" step_install_comfyui
 run_step "GPU prüfen" step_check_gpu
 run_step "Modelle laden" step_download_models
+run_step "LoRAs laden" step_download_loras
 
-# Hier folgen die Schritte aus 1e–1g (LoRAs laden, ComfyUI starten, rclone).
+# Hier folgen die Schritte aus 1f–1g (ComfyUI starten, rclone).
 
 # --- Abschluss ----------------------------------------------------------
 if [ "$SETUP_FAILED" -eq 0 ]; then

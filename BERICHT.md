@@ -1,42 +1,34 @@
-# BERICHT – Schritt 1d: Modelle laden (Modell-Sets, Download-Baustein in Python)
+# BERICHT – Schritt 1e: LoRAs von Civitai laden (nur Versionsnummer pflegen)
 
 ## Angelegt
-- `pod/models.toml`: Kopfkommentar (Zweck, Regeln), Sets `basis` (loader none, Upscaler), `fp16` (loader split: unet, t5, clip_l, vae) und `fp8` (loader checkpoint). Dateien je Set als `[[sets.<name>.files]]` mit role, url, dest, size, sha256. Werte wie vorgegeben; sha256 von t5, clip_l und vae leer. Reserve-Kommentar zum T5 fp8 steht vor dem t5-Eintrag.
-- `pod/models.py`: Download-Baustein, nur Standardbibliothek, kein Code auf Modulebene außer Konstanten und main-Guard.
-  - `load_catalog`, `validate_sets` (unbekannter Name, fehlende Felder, „Nur ein FLUX-Set pro Start“), `check_url` (nur https, Host genau huggingface.co oder civitai.com).
-  - `check_space`: Summe der fehlenden Dateien × 1,05 gegen freien Platz; Meldung „<Sets> brauchen X GB, frei sind Y GB“.
-  - `download_file(url, dest, sha256, headers=None)`: Verhalten wie vorgegeben (vorhandene Datei prüfen/überspringen, falsche Datei bleibt liegen, Pickle nur mit sha256, `.part`, 8-MB-Blöcke, Fortschritt alle 10 %, End-URL https, 3 Versuche, gemessene Prüfsumme mit „bitte in pod/models.toml eintragen“, dann `os.replace`).
-  - `download_sets` als gemeinsamer Ablauf (auch fürs Dashboard), CLI `download --sets … --models-dir …`, Ausgaben mit „[models]“, Exit 1 bei jedem Fehler (auch bei falschem Aufruf), sonst 0.
+- `pod/loras.toml`: Kopfkommentar (Zweck, Pflege, Regeln) und ein Eintrag `[[loras]]` mit `version_id = 1051416` (PsyDreamer).
 
 ## Geändert
-- `pod/versions.env`: `DEFAULT_MODEL_SETS="basis fp16"` mit Kommentar.
-- `pod/start.sh`:
-  - `source … versions.env` aus den Konstanten entfernt; neue erste Schritt-Funktion `step_load_versions` (source, dann Prüfung auf leere `COMFYUI_VERSION`/`DEFAULT_MODEL_SETS`), Aufruf per `run_step` direkt nach „Repo absichern“.
-  - Beschreibungstext von `run_step`: `${COMFYUI_VERSION:-?}` (einzige Stelle).
-  - `step_install_comfyui`: PyTorch-Version vor und nach pip, bei Unterschied „WARNUNG: pip hat PyTorch verändert (… → …)“, kein Fehler.
-  - Neue Funktion `step_download_models`, Aufruf `run_step "Modelle laden"` nach „GPU prüfen“; Platzhalter-Kommentar auf 1e–1g.
-- `ANLEITUNG.md`: Variable `MODEL_SETS`, Container Disk 50 GB, Hinweis zu gemessenen Prüfsummen im Protokoll.
-- `NOTIZEN.md`: drei Einträge 14.11.2026 (Modell-Sets mit Ladeart und Reserve T5 fp8; Sicherheitsregeln; Download-Baustein in Python).
-- `ARCHITEKTUR.md`: „Pod-Startskript“ nennt `pod/models.toml` und `pod/models.py`; Verweis auf 1e–1g korrigiert.
-- `MERKLISTE.md`: 1d abgehakt; 1g, Etappe 2 und Etappe 6 wie vorgegeben ergänzt.
+- `pod/models.py`:
+  - Neue Konstanten `DEFAULT_LORA_CATALOG`, `USER_AGENT` („DreamDeck/1.0“), `CIVITAI_API`, `ALLOWED_LORA_BASE`; `import json`; Modulkommentar um den Befehl `loras` ergänzt.
+  - `open_url(url, headers=None, timeout=TIMEOUT_SECONDS)`: einzige Stelle für Quellenprüfung, User-Agent, Weiterleitungsschutz (vorhandener `SafeRedirectHandler`), Timeout und https-Prüfung der End-Adresse. `fetch_to_part` nutzt sie statt eigenem Request/Opener.
+  - `civitai_lora(version_id, token)`: Abfrage der Civitai-API, Prüfungen wie vorgegeben (Typ LORA, Basismodell Flux.1 D, Datei primary bzw. erste vom Typ Model, SafeTensor, SHA256 vorhanden, Dateiname ohne Pfadteile mit Endung .safetensors, Download-Adresse besteht `check_url`). Rückgabe url, dest, size, sha256, label.
+  - `download_loras(catalog_path, models_dir, token)`: erst alle Einträge auflösen (Label ausgeben), dann `check_space`, dann `download_file` je Datei. Kein zweiter Download-Weg.
+  - CLI: Befehl `loras` mit `--models-dir` (Pflicht) und `--catalog`; Token nur aus `CIVITAI_TOKEN`. Fehlerbehandlung gemeinsam mit `download`.
+- `pod/start.sh`: neue Funktion `step_download_loras`, Aufruf `run_step "LoRAs laden"` nach „Modelle laden“; Platzhalter-Kommentar auf 1f–1g.
+- `ANLEITUNG.md`: bei `MODEL_SETS` „ohne Anführungszeichen eintragen“; neuer Abschnitt „LoRAs beim Start“.
+- `NOTIZEN.md`: Einträge 14.11.2026 (Grundhaltung „DreamDeck gibt nichts vor“; LoRA-Liste nur mit Versionsnummer, Regeln, Token nur aus der Umgebung, User-Agent).
+- `ARCHITEKTUR.md`: „Pod-Startskript“ nennt `pod/loras.toml` und den Befehl `loras`; Verweis auf 1f–1g.
+- `MERKLISTE.md`: 1e abgehakt; Etappe 2, 3 und 6 wie vorgegeben ergänzt.
 
 ## Prüfung
 - `bash -n pod/start.sh`: Exit 0, keine Ausgabe.
-- `bash -n pod/versions.env`: Exit 0 (zusätzlich geprüft).
-- **models.py ungetestet**: Python ist in der devbox nicht vorhanden, die Datei wurde weder ausgeführt noch auf Syntax geprüft. `models.toml` wurde ebenfalls nicht maschinell gelesen. Erster echter Lauf ist 1g.
+- **models.py ungetestet**: kein Python in der devbox, die Datei wurde weder ausgeführt noch auf Syntax geprüft. `loras.toml` wurde nicht maschinell gelesen. Erster echter Lauf ist 1g.
+- Die Civitai-API wurde nicht abgefragt. Die Feldnamen (`model.type`, `baseModel`, `files[].primary`, `metadata.format`, `hashes.SHA256`, `sizeKB`, `downloadUrl`) stammen aus der Vorgabe; ob Version 1051416 alle Regeln besteht (vor allem der genaue Text „Flux.1 D“), zeigt erst 1g.
 
 ## Auffälligkeiten
+- Kleine Verhaltensänderung in `fetch_to_part`: Die Meldung „End-Adresse nach Weiterleitung ist nicht https“ kommt jetzt aus `open_url` und nennt den Dateinamen nicht mehr.
 - Über die Vorgabe hinaus (bitte kurz ansehen):
-  - Weiterleitungen: Header (später der Civitai-Token) gehen nur an den ursprünglichen Host, nicht an die Speicher-Server hinter der Weiterleitung. urllib würde sie sonst mitschicken. Weiterleitungen auf http werden schon beim Folgen abgelehnt.
-  - Ziele (`dest`) mit absolutem Pfad oder `..` werden abgelehnt.
-  - Stimmt die empfangene Größe nicht mit Content-Length überein, zählt das als Netzfehler und wird wiederholt.
-  - HTTP-Fehler 4xx (außer 429) werden nicht wiederholt, sondern sofort gemeldet.
-  - Zwischen den Versuchen liegt eine Pause von 5 Sekunden.
-  - Alle Quellen und die Pickle-Regel werden vor dem ersten Download geprüft, damit ein absehbarer Fehler nicht erst nach 30 GB auffällt.
-- Kein Fortsetzen abgebrochener Downloads: Jeder Versuch beginnt bei null (so vorgegeben: `.part` wird vorher gelöscht). Bei der 23,8-GB-Datei kann das Zeit kosten.
-- Vorhandene Dateien mit bekannter Prüfsumme werden bei jedem Start neu gehasht. Bei fp16 sind das rund 24 GB (später 34 GB, wenn alle Prüfsummen eingetragen sind) – geschätzt ein bis zwei Minuten, nicht gemessen.
-- Platzbedarf fp16 + basis: rund 34,2 GB, mit Zuschlag 36,0 GB. Dazu kommen ComfyUI und pip-Pakete; ob 50 GB Container Disk reichen, zeigt `df -h` in 1g.
-- GB werden als 10^9 Bytes gerechnet und mit deutschem Komma ausgegeben.
-- Der User-Agent ist der Standard von urllib. Ob civitai.com den annimmt, ist ungeprüft (Thema für 1e).
-- Die Größen und Prüfsummen in `models.toml` sind aus der Vorgabe übernommen, nicht gegen die Quellen geprüft.
+  - Der Token wird vor der ersten Anfrage geprüft (Leerraum am Rand entfernt; nur druckbare ASCII-Zeichen ohne Leerzeichen, sonst „CIVITAI_TOKEN enthält ungültige Zeichen“). Grund: Python nennt bei einem ungültigen Header-Wert den Wert in der Fehlermeldung – der Token stünde sonst im Protokoll.
+  - Netz- und JSON-Fehler bei der API-Abfrage werden als „Civitai-Version <id>: Abfrage fehlgeschlagen (<Fehlertyp>)“ gemeldet, ohne Details.
+  - Fehlende Modelldatei, fehlende Download-Adresse oder fehlende Größenangabe in der Antwort geben eine eigene Fehlermeldung.
+- Die API-Abfrage wird nicht wiederholt (anders als der Datei-Download mit 3 Versuchen). Ein kurzer Aussetzer bei Civitai bricht den Schritt „LoRAs laden“ ab.
+- Bei der Platzprüfung heißt es in der Meldung „LoRAs brauchen X GB, frei sind Y GB“ (`check_space` unverändert wiederverwendet).
+- Zwei LoRA-Versionen mit gleichem Dateinamen würden auf dasselbe Ziel zeigen; die zweite scheitert dann an der Prüfsumme der vorhandenen Datei. Bei einem Eintrag ohne Belang.
+- „Secrets prüfen“ verlangt `CIVITAI_TOKEN` schon vorher; die Meldung „CIVITAI_TOKEN fehlt“ aus `models.py` greift nur beim direkten Aufruf.
 - Nicht committet.

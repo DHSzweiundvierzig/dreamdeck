@@ -16,7 +16,7 @@
   - [x] 1b Startskript-Gerüst, Startbefehl für die RunPod-Vorlage
   - [x] 1c Basis-Image und ComfyUI-Version festlegen, ComfyUI installieren
   - [x] 1d Modelle laden (FLUX.1 [dev], T5, CLIP-L, VAE, Upscaler), vorhandene überspringen
-  - [ ] 1e LoRAs von Civitai laden, Liste im Repo pflegbar
+  - [x] 1e LoRAs von Civitai laden, Liste im Repo pflegbar
   - [ ] 1f ComfyUI im Hintergrund starten, rclone einrichten (Token auspacken, Monatsordner, Dateinamen mit Zeitstempel)
   - [ ] 1g Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt; gemessene Prüfsummen eintragen, freien Speicher prüfen (df -h)
 
@@ -27,9 +27,11 @@
 - [ ] Python in der devbox (für Dashboard und Tests)
 - [ ] Einstellungsseite: Modell-Sets mit Status und Nachladen, evtl. Set tauschen
 - [ ] Modell-Dropdown nach Ladeart (checkpoint/split)
+- [ ] LoRA per Civitai-Link oder Versionsnummer nachladen (nutzt civitai_lora/download_file)
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten
+- [ ] Metadaten alter Bilder auslesen (welche LoRAs waren dabei?)
 
 ## Etappe 4 – Prompt-Werkstatt
 - [ ] Prompt-Werkstatt
@@ -38,7 +40,7 @@
 - [ ] Civitai-Anbindung
 
 ## Etappe 6 – Ideen-Parkplatz
-- [ ] Network Volume
+- [ ] Network Volume – dann Modelle und Bilder außerhalb des ComfyUI-Ordners ablegen (extra_model_paths), weil ein ComfyUI-Versionswechsel den Ordner löscht
 - [ ] Upscaling-Workflow
 - [ ] Bild-zu-Bild
 - [ ] Vergleichsansicht

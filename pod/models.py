@@ -3,8 +3,12 @@
 Liest die Modell-Sets aus pod/models.toml und lädt fehlende Dateien sicher herunter:
 nur erlaubte Quellen, Platzprüfung vorab, Prüfsumme, Download über eine .part-Datei.
 
+LoRAs stehen in pod/loras.toml nur mit ihrer Civitai-Versionsnummer; Dateiname,
+Größe und Prüfsumme kommen über die Civitai-API.
+
 Aufruf:
     python3 pod/models.py download --sets "basis fp16" --models-dir /pfad
+    python3 pod/models.py loras --models-dir /pfad   (Token aus CIVITAI_TOKEN)
 
 Nur Python-Standardbibliothek, Python 3.12.
 """
@@ -12,6 +16,7 @@ Nur Python-Standardbibliothek, Python 3.12.
 import argparse
 import hashlib
 import http.client
+import json
 import os
 import shutil
 import sys
@@ -31,6 +36,10 @@ RETRY_PAUSE_SECONDS = 5
 TIMEOUT_SECONDS = 60
 SPACE_FACTOR = 1.05
 DEFAULT_CATALOG = Path(__file__).with_name("models.toml")
+DEFAULT_LORA_CATALOG = Path(__file__).with_name("loras.toml")
+USER_AGENT = "DreamDeck/1.0"
+CIVITAI_API = "https://civitai.com/api/v1/model-versions/"
+ALLOWED_LORA_BASE = "Flux.1 D"
 
 
 class ModelError(Exception):
@@ -142,20 +151,33 @@ class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
         return new_request
 
 
-def fetch_to_part(url, part, headers, name):
-    """Ein Download-Versuch nach part; gibt die gemessene sha256 zurück."""
-    part.unlink(missing_ok=True)
-    request = urllib.request.Request(url)
+def open_url(url, headers=None, timeout=TIMEOUT_SECONDS):
+    """Einzige Stelle für alle Anfragen: Quellenprüfung, User-Agent, Weiterleitungsschutz, Timeout.
+
+    headers (z. B. ein Token) gehen nur an den ursprünglichen Host und werden nie ausgegeben.
+    Rückgabe ist die geöffnete Antwort; der Aufrufer schließt sie (with).
+    """
+    check_url(url)
+    # Der User-Agent ist ein normaler Header und darf weitergeleitet werden.
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     for key, value in (headers or {}).items():
         # Nicht weiterleitbar: fremde Hosts bekommen die Header nie zu sehen.
         request.add_unredirected_header(key, value)
     opener = urllib.request.build_opener(SafeRedirectHandler())
+    response = opener.open(request, timeout=timeout)
+    if urllib.parse.urlsplit(response.geturl()).scheme != "https":
+        response.close()
+        raise ModelError("End-Adresse nach Weiterleitung ist nicht https")
+    return response
+
+
+def fetch_to_part(url, part, headers, name):
+    """Ein Download-Versuch nach part; gibt die gemessene sha256 zurück."""
+    part.unlink(missing_ok=True)
     digest = hashlib.sha256()
     received = 0
     next_mark = 10
-    with opener.open(request, timeout=TIMEOUT_SECONDS) as response:
-        if urllib.parse.urlsplit(response.geturl()).scheme != "https":
-            raise ModelError(f"{name}: End-Adresse nach Weiterleitung ist nicht https")
+    with open_url(url, headers) as response:
         total = int(response.headers.get("Content-Length") or 0)
         say(f"{name}: Download startet ({format_gb(total)} GB)" if total else f"{name}: Download startet")
         with open(part, "wb") as handle:
@@ -252,6 +274,97 @@ def download_sets(catalog, names, models_dir):
     say(f"Alle Dateien vorhanden ({', '.join(names)})")
 
 
+def civitai_lora(version_id, token):
+    """Löst eine Civitai-Versionsnummer über die API auf und prüft die LoRA-Regeln.
+
+    Rückgabe: dict mit url, dest, size, sha256 und label.
+    """
+    if not isinstance(version_id, int) or isinstance(version_id, bool) or version_id <= 0:
+        raise ModelError(f"Civitai-Version ungültig (positive ganze Zahl erwartet): {version_id!r}")
+    prefix = f"Civitai-Version {version_id}"
+    try:
+        with open_url(CIVITAI_API + str(version_id), headers={"Authorization": "Bearer " + token}) as response:
+            data = json.load(response)
+    except urllib.error.HTTPError as error:
+        hint = " – Token ungültig oder ohne Leserecht?" if error.code in (401, 403) else ""
+        raise ModelError(f"{prefix}: HTTP {error.code}{hint}") from None
+    except (OSError, http.client.HTTPException, ValueError) as error:
+        # Nur der Fehlertyp: die Meldung soll nichts aus der Anfrage enthalten.
+        raise ModelError(f"{prefix}: Abfrage fehlgeschlagen ({type(error).__name__})") from None
+    if not isinstance(data, dict):
+        raise ModelError(f"{prefix}: unerwartete Antwort von Civitai")
+
+    model = data.get("model") or {}
+    if model.get("type") != "LORA":
+        raise ModelError(f"{prefix}: kein LoRA (Typ: {model.get('type')})")
+    if data.get("baseModel") != ALLOWED_LORA_BASE:
+        raise ModelError(
+            f"{prefix}: Basismodell {data.get('baseModel')} nicht erlaubt (nur {ALLOWED_LORA_BASE})"
+        )
+
+    files = [item for item in data.get("files") or [] if isinstance(item, dict)]
+    chosen = next((item for item in files if item.get("primary") is True), None)
+    if chosen is None:
+        chosen = next((item for item in files if item.get("type") == "Model"), None)
+    if chosen is None:
+        raise ModelError(f"{prefix}: keine Modelldatei gefunden")
+
+    file_format = (chosen.get("metadata") or {}).get("format")
+    if file_format != "SafeTensor":
+        raise ModelError(f"{prefix}: Format {file_format} nicht erlaubt (nur SafeTensor)")
+    sha256 = (chosen.get("hashes") or {}).get("SHA256")
+    if not isinstance(sha256, str) or not sha256.strip():
+        raise ModelError(f"{prefix}: Civitai liefert keine Prüfsumme (SHA256)")
+    name = chosen.get("name")
+    if not isinstance(name, str) or not name or Path(name).name != name:
+        raise ModelError(f"{prefix}: Dateiname abgelehnt (keine Pfadteile erlaubt): {name}")
+    if not name.lower().endswith(".safetensors"):
+        raise ModelError(f"{prefix}: Dateiname abgelehnt (muss auf .safetensors enden): {name}")
+    url = chosen.get("downloadUrl")
+    if not isinstance(url, str):
+        raise ModelError(f"{prefix}: Download-Adresse fehlt")
+    check_url(url)
+    size_kb = chosen.get("sizeKB")
+    if not isinstance(size_kb, (int, float)) or isinstance(size_kb, bool) or size_kb <= 0:
+        raise ModelError(f"{prefix}: Größenangabe fehlt")
+
+    return {
+        "url": url,
+        "dest": f"loras/{name}",
+        "size": round(size_kb * 1024),
+        "sha256": sha256.strip().lower(),
+        "label": f"{model.get('name')} – {data.get('name')}",
+    }
+
+
+def download_loras(catalog_path, models_dir, token):
+    """Lädt die LoRAs aus loras.toml nach models_dir/loras (gleicher Download-Weg wie die Modelle)."""
+    entries = load_catalog(catalog_path).get("loras") or []
+    if not entries:
+        say("keine LoRAs eingetragen")
+        return
+    token = (token or "").strip()
+    if not token:
+        raise ModelError("CIVITAI_TOKEN fehlt")
+    if not token.isascii() or not token.isprintable() or " " in token:
+        # Vorab prüfen: ein Fehler beim Senden könnte den Wert sonst in der Meldung nennen.
+        raise ModelError("CIVITAI_TOKEN enthält ungültige Zeichen")
+    headers = {"Authorization": "Bearer " + token}
+
+    # Erst alle Einträge auflösen und prüfen, dann laden.
+    files = []
+    for entry in entries:
+        version_id = entry.get("version_id") if isinstance(entry, dict) else None
+        info = civitai_lora(version_id, token)
+        say(f"LoRA {version_id}: {info['label']}")
+        files.append((info, resolve_dest(models_dir, info["dest"])))
+    os.makedirs(models_dir, exist_ok=True)
+    check_space(files, ["LoRAs"], models_dir)
+    for info, dest in files:
+        download_file(info["url"], dest, info["sha256"], headers=headers)
+    say("Alle LoRAs vorhanden")
+
+
 class Parser(argparse.ArgumentParser):
     """Wie ArgumentParser, aber mit Exit 1 statt 2 bei falschem Aufruf."""
 
@@ -268,11 +381,18 @@ def main(argv=None):
     download.add_argument("--sets", required=True, help='Set-Namen mit Leerzeichen, z. B. "basis fp16"')
     download.add_argument("--models-dir", required=True, help="Modellordner von ComfyUI")
     download.add_argument("--catalog", default=str(DEFAULT_CATALOG), help="Pfad zu models.toml")
+    loras = commands.add_parser("loras", help="LoRAs aus loras.toml laden (Token aus CIVITAI_TOKEN)")
+    loras.add_argument("--models-dir", required=True, help="Modellordner von ComfyUI")
+    loras.add_argument("--catalog", default=str(DEFAULT_LORA_CATALOG), help="Pfad zu loras.toml")
     args = parser.parse_args(argv)
 
     try:
-        catalog = load_catalog(args.catalog)
-        download_sets(catalog, args.sets.split(), args.models_dir)
+        if args.command == "loras":
+            # Der Token kommt nur aus der Umgebung – Kommandozeilen sind für andere Prozesse sichtbar.
+            download_loras(args.catalog, args.models_dir, os.environ.get("CIVITAI_TOKEN", ""))
+        else:
+            catalog = load_catalog(args.catalog)
+            download_sets(catalog, args.sets.split(), args.models_dir)
     except ModelError as error:
         say(f"FEHLER: {error}")
         return 1

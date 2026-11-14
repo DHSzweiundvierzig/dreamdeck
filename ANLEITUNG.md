@@ -17,7 +17,7 @@ bash -c 'rm -rf /workspace/dreamdeck; git clone --depth 1 -b "${DREAMDECK_BRANCH
    - `CIVITAI_TOKEN` = `{{ RUNPOD_SECRET_CIVITAI_TOKEN }}`
    - `RCLONE_DRIVE_TOKEN` = `{{ RUNPOD_SECRET_RCLONE_DRIVE_TOKEN }}`
    - `DREAMDECK_BRANCH` = `main` (für Tests vor dem Merge den Branch-Namen eintragen, z. B. `etappe-1`)
-   - `MODEL_SETS` (optional) = Standard `basis fp16`; für fp8 `basis fp8` eintragen. Nie beide FLUX-Sets zusammen.
+   - `MODEL_SETS` (optional) = Standard `basis fp16`; für fp8 `basis fp8` eintragen (ohne Anführungszeichen eintragen). Nie beide FLUX-Sets zusammen.
 5. Container Disk: 50 GB
 
 ### Protokoll ansehen
@@ -29,6 +29,9 @@ tail -f /workspace/logs/start.log
 ```
 
 Hinweis: Prüfsummen, die beim ersten Lauf gemessen werden, stehen im Protokoll mit „bitte eintragen“ (suchen mit `grep "bitte" /workspace/logs/start.log`) und gehören danach in `pod/models.toml`.
+
+### LoRAs beim Start
+Welche LoRAs der Pod beim Start lädt, steht in `pod/loras.toml`. Eingetragen wird nur die Civitai-Versionsnummer: auf der Modellseite die Version wählen, die Zahl hinter `modelVersionId=` in der Adresse ist die Versionsnummer; den Namen als Kommentar dahinter schreiben. Dateiname, Größe und Prüfsumme holt der Pod selbst von Civitai. Erlaubt sind nur LoRAs für Flux.1 D im Format SafeTensor. Die Liste bewusst klein halten – weitere LoRAs kommen später übers Dashboard.
 
 ## Arbeiten
 Folgt in Etappe 2.

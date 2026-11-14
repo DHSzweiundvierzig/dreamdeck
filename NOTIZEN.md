@@ -51,3 +51,8 @@
   - Reserve bei Platzmangel: T5 als fp8 (`t5xxl_fp8_e4m3fn.safetensors`, ca. 4,9 GB) statt fp16.
 - **14.11.2026 – Sicherheitsregeln für Downloads** – nur die Hosts huggingface.co und civitai.com (https); Prüfsummen (sha256) aus `pod/models.toml`, fehlende werden beim ersten Lauf gemessen und protokolliert; Pickle-Dateien (.pth/.pt/.ckpt/.bin) nur mit Prüfsumme; Download erst in eine `.part`-Datei, umbenannt wird nach bestandener Prüfung; Platzprüfung vor dem Laden; Header (Tokens) werden nie ausgegeben.
 - **14.11.2026 – Download-Baustein in Python (`pod/models.py`) statt in Bash** – Grund: Das Dashboard verwendet ihn wieder (Nachladen, LoRAs), es gibt nur eine Download-Logik. Nur Standardbibliothek.
+- **14.11.2026 – Grundhaltung „DreamDeck gibt nichts vor“** – beim Start wird nur PsyDreamer geladen, alles andere bei Bedarf übers Dashboard.
+- **14.11.2026 – LoRA-Liste (`pod/loras.toml`) nur mit Civitai-Versionsnummer** – Dateiname, Größe, Basismodell und Prüfsumme kommen über die Civitai-API; nichts davon wird von Hand gepflegt.
+  - Regeln: nur Typ LoRA, nur Basismodell Flux.1 D, nur SafeTensor. Alles andere wird abgelehnt.
+  - Der Token kommt nur aus der Umgebung (`CIVITAI_TOKEN`), nie als Argument – Kommandozeilen sind für andere Prozesse sichtbar.
+  - Alle Anfragen senden den User-Agent `DreamDeck/1.0`.
