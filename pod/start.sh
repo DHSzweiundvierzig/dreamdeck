@@ -21,6 +21,8 @@ COMFY_DIR=/workspace/ComfyUI
 COMFY_REPO=https://github.com/Comfy-Org/ComfyUI.git
 OUTPUT_DIR=/workspace/output
 COMFY_PORT=8188
+RCLONE_CONF=/root/.config/rclone/rclone.conf
+RCLONE_REMOTE=gdrive
 
 # --- Protokoll ----------------------------------------------------------
 mkdir -p "$LOG_DIR"
@@ -65,8 +67,9 @@ run_step() {
 # Läuft ohne Subshell, damit die Werte in der Hauptshell bleiben.
 step_load_versions() {
     source "$REPO_DIR/pod/versions.env" || return 1
-    if [ -z "${COMFYUI_VERSION:-}" ] || [ -z "${DEFAULT_MODEL_SETS:-}" ]; then
-        log "pod/versions.env unvollständig: COMFYUI_VERSION oder DEFAULT_MODEL_SETS ist leer"
+    if [ -z "${COMFYUI_VERSION:-}" ] || [ -z "${DEFAULT_MODEL_SETS:-}" ] \
+        || [ -z "${RCLONE_VERSION:-}" ] || [ -z "${RCLONE_SHA256:-}" ]; then
+        log "pod/versions.env unvollständig: COMFYUI_VERSION, DEFAULT_MODEL_SETS, RCLONE_VERSION oder RCLONE_SHA256 ist leer"
         return 1
     fi
 }
@@ -147,14 +150,75 @@ print("GPU:", torch.cuda.get_device_name(0))
     fi
 }
 
+# rclone in der festen Version aus pod/versions.env installieren (Prüfsumme
+# Pflicht). Entpackt wird mit python3 (zipfile), weil unzip im Image fehlen kann.
+step_install_rclone() {
+    local url zip_file extract_dir
+    if rclone version 2>/dev/null | head -n 1 | grep -qF "rclone $RCLONE_VERSION"; then
+        log "rclone $RCLONE_VERSION ist schon vorhanden – Installation übersprungen"
+        return 0
+    fi
+    url="https://github.com/rclone/rclone/releases/download/$RCLONE_VERSION/rclone-$RCLONE_VERSION-linux-amd64.zip"
+    zip_file=/tmp/rclone.zip
+    extract_dir=/tmp/rclone-extract
+    curl -fsSL --retry 3 -o "$zip_file" "$url" || { rm -f "$zip_file"; return 1; }
+    if ! echo "$RCLONE_SHA256  $zip_file" | sha256sum -c --quiet -; then
+        rm -f "$zip_file"
+        log "rclone: Prüfsumme stimmt nicht – Datei gelöscht"
+        return 1
+    fi
+    rm -rf "$extract_dir"
+    mkdir -p "$extract_dir" || return 1
+    python3 -I -c '
+import sys, zipfile
+zipfile.ZipFile(sys.argv[1]).extract(sys.argv[2], sys.argv[3])
+' "$zip_file" "rclone-$RCLONE_VERSION-linux-amd64/rclone" "$extract_dir" \
+        || { rm -rf "$zip_file" "$extract_dir"; return 1; }
+    install -m 755 "$extract_dir/rclone-$RCLONE_VERSION-linux-amd64/rclone" /usr/local/bin/rclone \
+        || { rm -rf "$zip_file" "$extract_dir"; return 1; }
+    rm -rf "$zip_file" "$extract_dir"
+}
+
+# rclone-Konfiguration aus RCLONE_DRIVE_TOKEN schreiben (base64 ohne Padding,
+# darin JSON mit Feld „token“), Token aus der Umgebung löschen, Verbindung testen
+# und Ordner DreamDeck anlegen. Der Tokeninhalt wird nie ausgegeben.
+# Läuft ohne Subshell, damit unset in der Hauptshell wirkt.
+step_configure_rclone() {
+    if ! python3 -I -c '
+import base64, json, os, sys
+conf_path, remote = sys.argv[1], sys.argv[2]
+try:
+    raw = os.environ["RCLONE_DRIVE_TOKEN"].strip()
+    raw += "=" * (-len(raw) % 4)
+    token = json.loads(base64.b64decode(raw))["token"]
+    json.loads(token)
+except Exception:
+    print("RCLONE_DRIVE_TOKEN ist unbrauchbar (Dekodieren fehlgeschlagen oder Feld token fehlt)")
+    sys.exit(1)
+token = json.dumps(json.loads(token))
+os.makedirs(os.path.dirname(conf_path), exist_ok=True)
+fd = os.open(conf_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+with os.fdopen(fd, "w") as f:
+    f.write("[%s]\ntype = drive\nscope = drive.file\ntoken = %s\n" % (remote, token))
+' "$RCLONE_CONF" "$RCLONE_REMOTE"; then
+        unset RCLONE_DRIVE_TOKEN
+        return 1
+    fi
+    unset RCLONE_DRIVE_TOKEN
+    if ! rclone --config "$RCLONE_CONF" mkdir "$RCLONE_REMOTE:DreamDeck"; then
+        log "rclone-Verbindung fehlgeschlagen – Token abgelaufen? Siehe ANLEITUNG, Zugänge erneuern"
+        return 1
+    fi
+}
+
 # ComfyUI im Hintergrund starten, nur auf 127.0.0.1 erreichbar (--listen wird
-# bewusst ausdrücklich gesetzt). Bilder liegen außerhalb des ComfyUI-Ordners,
-# weil ein Versionswechsel diesen Ordner löscht. Wartet höchstens 180 s,
-# bis /system_stats antwortet.
+# bewusst ausdrücklich gesetzt), ohne CIVITAI_TOKEN (wird nicht geerbt). Bilder
+# liegen außerhalb des ComfyUI-Ordners, weil ein Versionswechsel diesen Ordner
+# löscht. Wartet höchstens 180 s, bis /system_stats antwortet.
 step_start_comfyui() {
     local pid waited=0
     mkdir -p "$OUTPUT_DIR" || return 1
-    nohup python3 "$COMFY_DIR/main.py" --listen 127.0.0.1 --port "$COMFY_PORT" \
+    env -u CIVITAI_TOKEN nohup python3 "$COMFY_DIR/main.py" --listen 127.0.0.1 --port "$COMFY_PORT" \
         --output-directory "$OUTPUT_DIR" > "$LOG_DIR/comfyui.log" 2>&1 &
     pid=$!
     log "ComfyUI gestartet (PID $pid), Protokoll: $LOG_DIR/comfyui.log"
@@ -200,9 +264,11 @@ run_step "ComfyUI ${COMFYUI_VERSION:-?} installieren" step_install_comfyui
 run_step "GPU prüfen" step_check_gpu
 run_step "Modelle laden" step_download_models
 run_step "LoRAs laden" step_download_loras
+run_step "rclone ${RCLONE_VERSION:-?} installieren" step_install_rclone
+run_step "rclone einrichten" step_configure_rclone
 run_step "ComfyUI starten" step_start_comfyui
 
-# Hier folgt der Schritt aus 1g (rclone).
+# Hier folgt der Schritt aus 1h (Sync-Schleife).
 
 # --- Abschluss ----------------------------------------------------------
 if [ "$SETUP_FAILED" -eq 0 ]; then

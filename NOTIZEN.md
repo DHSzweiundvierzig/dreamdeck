@@ -58,3 +58,8 @@
   - Der Token kommt nur aus der Umgebung (`CIVITAI_TOKEN`), nie als Argument – Kommandozeilen sind für andere Prozesse sichtbar.
   - Alle Anfragen senden den User-Agent `DreamDeck/1.0`.
 - **14.11.2026 – Bildablage außerhalb von ComfyUI: `/workspace/output` per `--output-directory`** – Grund: `step_install_comfyui` löscht `/workspace/ComfyUI` bei einem Versionswechsel.
+- **14.11.2026 – rclone fest in v1.75.2 von GitHub-Releases, mit Prüfsumme**
+  - Grund Version: mehr als 14 Tage alt (v1.76.0 war erst 8 Tage alt); Prüfsumme gegen die offizielle SHA256SUMS geprüft.
+  - github.com ist als Download-Quelle nur für Werkzeuge erlaubt, Modelle weiter nur huggingface.co und civitai.com.
+  - Token-Format: base64 ohne Padding, darin JSON mit Feld „token“.
+  - Reihenfolge: rclone-Einrichtung vor dem ComfyUI-Start, danach unset, damit ComfyUI den Token nicht erbt. ComfyUI startet ohne CIVITAI_TOKEN.

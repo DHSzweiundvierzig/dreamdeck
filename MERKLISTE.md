@@ -18,8 +18,9 @@
   - [x] 1d Modelle laden (FLUX.1 [dev], T5, CLIP-L, VAE, Upscaler), vorhandene überspringen
   - [x] 1e LoRAs von Civitai laden, Liste im Repo pflegbar
   - [x] 1f ComfyUI im Hintergrund starten (nur intern, Bilder unter /workspace/output)
-  - [ ] 1g rclone einrichten (feste Version mit Prüfsumme, Token auspacken, pod/sync.sh für Schleife und letzten Sync, Ordner DreamDeck/)
-  - [ ] 1h Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt; gemessene Prüfsummen eintragen, freien Speicher prüfen (df -h); vorher klären, wie die ComfyUI-Oberfläche trotz „nur intern“ erreichbar ist
+  - [x] 1g rclone installieren (v1.75.2 mit Prüfsumme) und einrichten (Token auspacken, Ordner DreamDeck/)
+  - [ ] 1h Sync: pod/sync.sh für Schleife im Hintergrund und letzten Sync vor dem Löschen; ANLEITUNG „Pod beenden“
+  - [ ] 1i Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt; gemessene Prüfsummen eintragen, freien Speicher prüfen (df -h); vorher klären, wie die ComfyUI-Oberfläche trotz „nur intern“ erreichbar ist
 
 ## Etappe 2 – Dashboard-MVP
 - [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox

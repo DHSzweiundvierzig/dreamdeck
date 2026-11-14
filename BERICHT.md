@@ -1,12 +1,16 @@
-# BERICHT – Schritt 1f: ComfyUI im Hintergrund starten
+# Bericht – Schritt 1g: rclone installieren und einrichten
 
-## Geändert
-- `pod/start.sh`: Konstanten `OUTPUT_DIR=/workspace/output` und `COMFY_PORT=8188`. Neue Funktion `step_start_comfyui` (nach `step_check_gpu`): startet ComfyUI per `nohup` ohne `cd`, mit `--listen 127.0.0.1`, `--port` und `--output-directory`, Ausgabe in `comfyui.log`. Wartet per python3/urllib alle 5 s, höchstens 180 s, auf `/system_stats`; bricht ab, wenn der Prozess endet oder die Zeit abläuft. Im Ablauf nach „LoRAs laden“ als `run_step "ComfyUI starten"` eingehängt, Kommentar auf 1g angepasst.
-- `ARCHITEKTUR.md`: Zeile „Pod-Startskript“ angepasst; „ComfyUI headless“ auf „Start umgesetzt“ mit Port, Bildablage und Protokoll.
-- `NOTIZEN.md`: Drive-Eintrag auf `_NNNNN_.png` geändert, Unterpunkt zu `filename_prefix` ergänzt; neuer Eintrag zur Bildablage außerhalb von ComfyUI.
-- `MERKLISTE.md`: 1f abgehakt, neu 1g (rclone), bisherige 1g zu 1h mit Zusatz zur Erreichbarkeit der Oberfläche.
+## Geänderte Dateien
+- `pod/versions.env`: `RCLONE_VERSION=v1.75.2` und `RCLONE_SHA256` ergänzt, mit Kommentar zur Quelle.
+- `pod/start.sh`: Versionsprüfung um die rclone-Werte erweitert; Konstanten `RCLONE_CONF` und `RCLONE_REMOTE`; neue Schritte `step_install_rclone` (Download nach /tmp, Prüfsumme, Entpacken mit python3/zipfile, `install -m 755`) und `step_configure_rclone` (Token nur aus der Umgebung, Konfiguration mit Rechten 600, `unset`, `rclone mkdir` als Verbindungstest); ComfyUI startet mit `env -u CIVITAI_TOKEN`; Ablauf: rclone-Schritte zwischen „LoRAs laden“ und „ComfyUI starten“; Platzhalter-Kommentar verweist auf 1h.
+- `NOTIZEN.md`: Eintrag zu rclone-Version, Download-Quelle, Token-Format und Reihenfolge.
+- `ARCHITEKTUR.md`: Zeile „Pod-Startskript“ aktualisiert, „rclone-Sync“ unverändert.
+- `MERKLISTE.md`: 1g abgehakt, neue 1h (Sync), bisherige 1h jetzt 1i.
+- Nachbesserung: fehlendes Leerzeichen in step_start_comfyui (python3 "$COMFY_DIR/main.py").
 
 ## Offene Punkte
-- Nicht getestet (kein Pod/keine GPU hier); Abnahme im Testlauf (1h).
-- Klären vor 1h: Wie ist die ComfyUI-Oberfläche trotz „nur intern“ erreichbar?
-- `bash -n pod/start.sh` wurde nicht ausgeführt.
+- Nicht auf einem Pod getestet; Abnahme erst in 1i.
+- `step_install_rclone` nutzt `curl`; falls im Image nicht vorhanden, schlägt der Schritt fehl (dann auf python3-Download umstellen).
+- Bei einem Fehler im Token-Schritt wird der Token trotzdem aus der Umgebung gelöscht.
+- ANLEITUNG-Abschnitt „Zugänge erneuern“ wird in der Fehlermeldung genannt – bitte prüfen, ob er existiert.
+- Sync-Schleife und `pod/sync.sh` folgen in 1h.
