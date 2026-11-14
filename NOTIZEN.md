@@ -63,3 +63,9 @@
   - github.com ist als Download-Quelle nur für Werkzeuge erlaubt, Modelle weiter nur huggingface.co und civitai.com.
   - Token-Format: base64 ohne Padding, darin JSON mit Feld „token“.
   - Reihenfolge: rclone-Einrichtung vor dem ComfyUI-Start, danach unset, damit ComfyUI den Token nicht erbt. ComfyUI startet ohne CIVITAI_TOKEN.
+- **14.11.2026 – Gemeinsame Pfade in `pod/paths.env`** – Grund: eine Stelle für start.sh, sync.sh und später das Dashboard; nur NAME=Wert, damit auch Python sie lesen kann.
+- **14.11.2026 – Sync per rclone copy**
+  - Schleife alle 30 s mit Mindestalter 15 s, gegen halb geschriebene Bilder.
+  - Manueller letzter Sync ohne Mindestalter.
+  - flock gegen Überschneidung von Schleife und manuellem Sync.
+  - copy statt move, damit ComfyUI die Bilder bis zum Pod-Ende behält.

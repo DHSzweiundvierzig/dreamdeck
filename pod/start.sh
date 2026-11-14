@@ -13,16 +13,16 @@ set -u
 set -o pipefail
 
 # --- Konstanten ---------------------------------------------------------
-REPO_DIR=/workspace/dreamdeck
-LOG_DIR=/workspace/logs
+# Gemeinsame Pfade (REPO_DIR, LOG_DIR, COMFY_DIR, OUTPUT_DIR, COMFY_PORT,
+# RCLONE_CONF, RCLONE_REMOTE, DRIVE_FOLDER) stehen nur in pod/paths.env.
+if ! source "$(dirname "${BASH_SOURCE[0]}")/paths.env"; then
+    echo "DreamDeck: pod/paths.env fehlt"
+    [ -f /start.sh ] && /start.sh &
+    sleep infinity
+fi
 LOG_FILE=$LOG_DIR/start.log
 REPO_URL=https://github.com/DHSzweiundvierzig/dreamdeck.git
-COMFY_DIR=/workspace/ComfyUI
 COMFY_REPO=https://github.com/Comfy-Org/ComfyUI.git
-OUTPUT_DIR=/workspace/output
-COMFY_PORT=8188
-RCLONE_CONF=/root/.config/rclone/rclone.conf
-RCLONE_REMOTE=gdrive
 
 # --- Protokoll ----------------------------------------------------------
 mkdir -p "$LOG_DIR"
@@ -205,7 +205,7 @@ with os.fdopen(fd, "w") as f:
         return 1
     fi
     unset RCLONE_DRIVE_TOKEN
-    if ! rclone --config "$RCLONE_CONF" mkdir "$RCLONE_REMOTE:DreamDeck"; then
+    if ! rclone --config "$RCLONE_CONF" mkdir "$RCLONE_REMOTE:$DRIVE_FOLDER"; then
         log "rclone-Verbindung fehlgeschlagen – Token abgelaufen? Siehe ANLEITUNG, Zugänge erneuern"
         return 1
     fi
@@ -245,6 +245,13 @@ except Exception:
     return 1
 }
 
+# Sync-Schleife (pod/sync.sh loop) im Hintergrund starten, ohne CIVITAI_TOKEN.
+# Protokoll: sync.log (gemeinsam mit rclone).
+step_start_sync() {
+    env -u CIVITAI_TOKEN nohup bash "$REPO_DIR/pod/sync.sh" loop >> "$LOG_DIR/sync.log" 2>&1 &
+    log "Sync-Schleife gestartet (PID $!), Protokoll: $LOG_DIR/sync.log"
+}
+
 # --- Ablauf -------------------------------------------------------------
 log "DreamDeck-Start beginnt"
 
@@ -267,8 +274,7 @@ run_step "LoRAs laden" step_download_loras
 run_step "rclone ${RCLONE_VERSION:-?} installieren" step_install_rclone
 run_step "rclone einrichten" step_configure_rclone
 run_step "ComfyUI starten" step_start_comfyui
-
-# Hier folgt der Schritt aus 1h (Sync-Schleife).
+run_step "Sync-Schleife starten" step_start_sync
 
 # --- Abschluss ----------------------------------------------------------
 if [ "$SETUP_FAILED" -eq 0 ]; then

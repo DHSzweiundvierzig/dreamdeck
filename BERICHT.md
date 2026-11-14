@@ -1,16 +1,18 @@
-# Bericht – Schritt 1g: rclone installieren und einrichten
+# BERICHT – Schritt 1h: Sync ins Google Drive
 
-## Geänderte Dateien
-- `pod/versions.env`: `RCLONE_VERSION=v1.75.2` und `RCLONE_SHA256` ergänzt, mit Kommentar zur Quelle.
-- `pod/start.sh`: Versionsprüfung um die rclone-Werte erweitert; Konstanten `RCLONE_CONF` und `RCLONE_REMOTE`; neue Schritte `step_install_rclone` (Download nach /tmp, Prüfsumme, Entpacken mit python3/zipfile, `install -m 755`) und `step_configure_rclone` (Token nur aus der Umgebung, Konfiguration mit Rechten 600, `unset`, `rclone mkdir` als Verbindungstest); ComfyUI startet mit `env -u CIVITAI_TOKEN`; Ablauf: rclone-Schritte zwischen „LoRAs laden“ und „ComfyUI starten“; Platzhalter-Kommentar verweist auf 1h.
-- `NOTIZEN.md`: Eintrag zu rclone-Version, Download-Quelle, Token-Format und Reihenfolge.
-- `ARCHITEKTUR.md`: Zeile „Pod-Startskript“ aktualisiert, „rclone-Sync“ unverändert.
-- `MERKLISTE.md`: 1g abgehakt, neue 1h (Sync), bisherige 1h jetzt 1i.
-- Nachbesserung: fehlendes Leerzeichen in step_start_comfyui (python3 "$COMFY_DIR/main.py").
+## Dateien
+- **pod/paths.env** (neu): gemeinsame Pfade, Port, rclone-Remote und Drive-Ordner als schlichte NAME=Wert-Zeilen; auch für Python lesbar.
+- **pod/sync.sh** (neu): `sync_once` ist die einzige Stelle mit dem rclone-Befehl (copy). Ohne Argument: blockierender letzter Sync mit flock, Meldung „Sync fertig“ bzw. Fehlerhinweis, Exit-Code wird durchgereicht. Mit `loop`: alle 30 s, flock -n, `--min-age 15s`, Fehler mit Zeitstempel in sync.log. Unbekanntes Argument: Hilfe, Exit 1.
+- **pod/start.sh**: Pfadkonstanten entfernt, stattdessen `source paths.env` (Fallback: Meldung, /start.sh im Hintergrund, sleep infinity). `$DRIVE_FOLDER` statt festem „DreamDeck“. Neuer Schritt `step_start_sync` (ohne CIVITAI_TOKEN) nach dem ComfyUI-Start, Platzhalterkommentar entfernt.
+- **ANLEITUNG.md**: Protokollzeilen für ComfyUI und Sync ergänzt; „Pod beenden“ als drei nummerierte Schritte.
+- **ARCHITEKTUR.md**: rclone-Sync auf „umgesetzt“, Pod-Startskript-Zeile angepasst.
+- **NOTIZEN.md**: zwei Einträge (paths.env, Sync per rclone copy).
+- **MERKLISTE.md**: 1h abgehakt, Dashboard-Punkt in Etappe 2 ergänzt.
 
-## Offene Punkte
-- Nicht auf einem Pod getestet; Abnahme erst in 1i.
-- `step_install_rclone` nutzt `curl`; falls im Image nicht vorhanden, schlägt der Schritt fehl (dann auf python3-Download umstellen).
-- Bei einem Fehler im Token-Schritt wird der Token trotzdem aus der Umgebung gelöscht.
-- ANLEITUNG-Abschnitt „Zugänge erneuern“ wird in der Fehlermeldung genannt – bitte prüfen, ob er existiert.
-- Sync-Schleife und `pod/sync.sh` folgen in 1h.
+## Prüfung
+- `bash -n` für start.sh und sync.sh ohne Fehler; unbekanntes Argument liefert Hilfe und Exit 1.
+- Nicht getestet: echter rclone-Lauf (kein rclone/Drive in der devbox) – das passiert im Testlauf 1i.
+
+## Offen
+- Die Sperre nutzt einen Dateideskriptor (fd 9) statt `flock … Befehl`, damit die Umgebung erhalten bleibt; das ist eine kleine Abweichung von der Wortwahl der Vorgabe, aber gleiche Wirkung.
+- 1i (Testlauf auf RunPod) steht weiter aus.

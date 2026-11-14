@@ -26,6 +26,8 @@ Im Web-Terminal des Pods:
 ```
 tail -f /workspace/logs/start.log
 # RunPod-Dienste: tail -f /workspace/logs/runpod.log
+# ComfyUI: tail -f /workspace/logs/comfyui.log
+# Sync: tail -f /workspace/logs/sync.log
 ```
 
 Hinweis: Prüfsummen, die beim ersten Lauf gemessen werden, stehen im Protokoll mit „bitte eintragen“ (suchen mit `grep "bitte" /workspace/logs/start.log`) und gehören danach in `pod/models.toml`.
@@ -37,7 +39,9 @@ Welche LoRAs der Pod beim Start lädt, steht in `pod/loras.toml`. Eingetragen wi
 Folgt in Etappe 2.
 
 ## Pod beenden
-Folgt in Etappe 1.
+1. Im Web-Terminal: `bash /workspace/dreamdeck/pod/sync.sh` und auf „Sync fertig“ warten.
+2. Im Google Drive im Ordner DreamDeck kurz prüfen, ob die letzten Bilder da sind.
+3. Pod in RunPod löschen (Terminate). Alles auf dem Pod ist danach weg.
 
 ## Zugänge erneuern
 - **GitHub-Token (läuft am 15.05.2027 ab):** Auf GitHub einen neuen fine-grained Token mit denselben Einstellungen anlegen (Owner DHSzweiundvierzig, nur Repo dreamdeck, Contents: Read-only). Dann in RunPod das Secret `GITHUB_TOKEN` aktualisieren.

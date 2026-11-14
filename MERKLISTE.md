@@ -19,7 +19,7 @@
   - [x] 1e LoRAs von Civitai laden, Liste im Repo pflegbar
   - [x] 1f ComfyUI im Hintergrund starten (nur intern, Bilder unter /workspace/output)
   - [x] 1g rclone installieren (v1.75.2 mit Prüfsumme) und einrichten (Token auspacken, Ordner DreamDeck/)
-  - [ ] 1h Sync: pod/sync.sh für Schleife im Hintergrund und letzten Sync vor dem Löschen; ANLEITUNG „Pod beenden“
+  - [x] 1h Sync: pod/sync.sh (Schleife + letzter Sync), Pfade in pod/paths.env, ANLEITUNG „Pod beenden“
   - [ ] 1i Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt; gemessene Prüfsummen eintragen, freien Speicher prüfen (df -h); vorher klären, wie die ComfyUI-Oberfläche trotz „nur intern“ erreichbar ist
 
 ## Etappe 2 – Dashboard-MVP
@@ -30,6 +30,7 @@
 - [ ] Einstellungsseite: Modell-Sets mit Status und Nachladen, evtl. Set tauschen
 - [ ] Modell-Dropdown nach Ladeart (checkpoint/split)
 - [ ] LoRA per Civitai-Link oder Versionsnummer nachladen (nutzt civitai_lora/download_file)
+- [ ] Dashboard liest Pfade und Port aus pod/paths.env
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten
