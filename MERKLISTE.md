@@ -14,7 +14,7 @@
 - [ ] Pod-Startskript (git clone, ComfyUI, Modelle, LoRAs, rclone) – Unterschritte:
   - [x] 1a Doku-Nachträge nach den Vorarbeiten
   - [x] 1b Startskript-Gerüst, Startbefehl für die RunPod-Vorlage
-  - [ ] 1c Basis-Image und ComfyUI-Version festlegen, ComfyUI installieren
+  - [x] 1c Basis-Image und ComfyUI-Version festlegen, ComfyUI installieren
   - [ ] 1d Modelle laden (FLUX.1 [dev], T5, CLIP-L, VAE, Upscaler), vorhandene überspringen
   - [ ] 1e LoRAs von Civitai laden, Liste im Repo pflegbar
   - [ ] 1f ComfyUI im Hintergrund starten, rclone einrichten (Token auspacken, Monatsordner, Dateinamen mit Zeitstempel)

@@ -4,7 +4,8 @@
 
 ### RunPod-Vorlage (einmalig anlegen)
 1. RunPod-Konsole → Templates → New Template, Name „dreamdeck“.
-2. Container Image: wird in Schritt 1c festgelegt.
+2. Container Image: runpod/pytorch:2.1.0-cu1300-torch2130-ubuntu2404
+   Hinweis: Beim Pod-Start im CUDA-Filter 13.0 oder neuer wählen, sonst sieht PyTorch die GPU nicht (Treiber ab 580 nötig).
 3. Container Start Command (genau so kopieren):
 
 ```

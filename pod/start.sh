@@ -17,6 +17,11 @@ REPO_DIR=/workspace/dreamdeck
 LOG_DIR=/workspace/logs
 LOG_FILE=$LOG_DIR/start.log
 REPO_URL=https://github.com/DHSzweiundvierzig/dreamdeck.git
+COMFY_DIR=/workspace/ComfyUI
+COMFY_REPO=https://github.com/Comfy-Org/ComfyUI.git
+
+# Feste Versionen (COMFYUI_VERSION) aus pod/versions.env laden.
+source "$REPO_DIR/pod/versions.env"
 
 # --- Protokoll ----------------------------------------------------------
 mkdir -p "$LOG_DIR"
@@ -60,8 +65,8 @@ run_step() {
 # Token aus der Git-Adresse entfernen und aus der Umgebung löschen.
 # Läuft ohne Subshell, damit unset in der Hauptshell wirkt.
 step_secure_repo() {
-    git -C "$REPO_DIR" remote set-url origin "$REPO_URL" || return 1
     unset GITHUB_TOKEN
+    git -C "$REPO_DIR" remote set-url origin "$REPO_URL" || return 1
 }
 
 # Prüft nur, ob die Secrets gesetzt sind – der Wert wird nie ausgegeben.
@@ -79,6 +84,40 @@ step_check_secrets() {
     return "$missing"
 }
 
+# ComfyUI in der festen Version aus pod/versions.env installieren.
+# Passt der vorhandene Ordner nicht zur Version, wird er gelöscht und neu geklont.
+step_install_comfyui() {
+    local current
+    current=$(git -C "$COMFY_DIR" describe --tags 2>/dev/null || true)
+    if [ -d "$COMFY_DIR" ] && [ "$current" = "$COMFYUI_VERSION" ]; then
+        log "ComfyUI $COMFYUI_VERSION ist schon vorhanden – Klonen übersprungen"
+    else
+        if [ -d "$COMFY_DIR" ]; then
+            log "ComfyUI in anderer Version (${current:-unbekannt}) – Ordner wird gelöscht"
+            rm -rf "$COMFY_DIR" || return 1
+        fi
+        git clone --depth 1 --branch "$COMFYUI_VERSION" "$COMFY_REPO" "$COMFY_DIR" || return 1
+    fi
+    # Kein venv: das PyTorch des Basis-Images wird genutzt.
+    python3 -m pip install --no-cache-dir --break-system-packages -r "$COMFY_DIR/requirements.txt" || return 1
+}
+
+# Prüft, ob PyTorch die GPU sieht. Ohne GPU schlägt der Schritt fehl.
+step_check_gpu() {
+    if ! python3 -c '
+import sys
+import torch
+print("PyTorch:", torch.__version__)
+print("CUDA (PyTorch):", torch.version.cuda)
+if not torch.cuda.is_available():
+    sys.exit(1)
+print("GPU:", torch.cuda.get_device_name(0))
+'; then
+        log "GPU nicht verfügbar – Treiber des Hosts zu alt? Beim Pod-Start CUDA 13.0 oder neuer wählen."
+        return 1
+    fi
+}
+
 # --- Ablauf -------------------------------------------------------------
 log "DreamDeck-Start beginnt"
 
@@ -93,9 +132,10 @@ if [ -f /start.sh ]; then
 fi
 
 run_step "Secrets prüfen" step_check_secrets
+run_step "ComfyUI $COMFYUI_VERSION installieren" step_install_comfyui
+run_step "GPU prüfen" step_check_gpu
 
-# Hier folgen die Schritte aus 1c–1f
-# (ComfyUI installieren, Modelle laden, LoRAs laden, ComfyUI starten, rclone).
+# Hier folgen die Schritte aus 1d–1f (Modelle laden, LoRAs laden, ComfyUI starten, rclone).
 
 # --- Abschluss ----------------------------------------------------------
 if [ "$SETUP_FAILED" -eq 0 ]; then

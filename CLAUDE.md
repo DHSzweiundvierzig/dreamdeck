@@ -7,6 +7,7 @@
 ## Dateien ändern
 - Bestehende Dateien ausschließlich per Edit ändern, nie per Skript (kein sed/awk/Python zum Umschreiben).
 - Neue Dateien per Write anlegen.
+- Ausnahme: BERICHT.md wird jedes Mal komplett neu per Write geschrieben (einzige Datei mit dieser Ausnahme).
 
 ## Code-Hygiene
 - Bündel-Prüfung: vor neuen Funktionen prüfen, ob es schon passende gibt. Doppelungen zusammenlegen.
