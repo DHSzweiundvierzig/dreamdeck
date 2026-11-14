@@ -1,0 +1,71 @@
+# Modell-Sets für den Pod.
+#
+# Zweck: Diese Datei legt fest, welche Modelldateien der Pod beim Start lädt.
+# Gelesen wird sie von pod/models.py (Download-Baustein, später auch vom Dashboard).
+# Die Auswahl der Sets steht in pod/versions.env (DEFAULT_MODEL_SETS) und lässt
+# sich in RunPod per Variable MODEL_SETS überschreiben.
+#
+# Regeln:
+# - Quellen nur huggingface.co oder civitai.com (https).
+# - sha256 leer = Prüfsumme wird beim ersten Lauf gemessen und protokolliert,
+#   dann hier eintragen.
+# - Dateien mit Endung .pth/.pt/.ckpt/.bin (Pickle) nur mit sha256.
+# - Pro Start höchstens ein Set mit loader ≠ "none" (also nur ein FLUX-Set).
+#
+# Felder je Datei: role (Aufgabe), url (Quelle), dest (Ziel relativ zum
+# Modellordner von ComfyUI), size (Größe in Bytes, für die Platzprüfung), sha256.
+
+[sets.basis]
+label = "Basis (Upscaler)"
+loader = "none"
+
+[[sets.basis.files]]
+role = "upscaler"
+url = "https://huggingface.co/fofr/comfyui/resolve/main/upscale_models/4x-UltraSharp.pth"
+dest = "upscale_models/4x-UltraSharp.pth"
+size = 67000000  # ca.
+sha256 = "a5812231fc936b42af08a5edba784195495d303d5b3248c24489ef0c4021fe01"
+
+[sets.fp16]
+label = "FLUX.1 [dev] fp16 (Einzeldateien)"
+loader = "split"
+
+[[sets.fp16.files]]
+role = "unet"
+url = "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev.safetensors"
+dest = "diffusion_models/flux1-dev.safetensors"
+size = 23802932552
+sha256 = "4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7"
+
+# Reserve bei Platzmangel: t5xxl_fp8_e4m3fn.safetensors (ca. 4,9 GB) statt t5xxl_fp16.
+[[sets.fp16.files]]
+role = "t5"
+url = "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors"
+dest = "text_encoders/t5xxl_fp16.safetensors"
+size = 9787841024
+sha256 = ""
+
+[[sets.fp16.files]]
+role = "clip_l"
+url = "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors"
+dest = "text_encoders/clip_l.safetensors"
+size = 246144152
+sha256 = ""
+
+[[sets.fp16.files]]
+role = "vae"
+url = "https://huggingface.co/Comfy-Org/Lumina_Image_2.0_Repackaged/resolve/main/split_files/vae/ae.safetensors"
+dest = "vae/ae.safetensors"
+size = 335304388
+sha256 = ""
+
+[sets.fp8]
+label = "FLUX.1 [dev] fp8 (Komplettpaket)"
+loader = "checkpoint"
+
+[[sets.fp8.files]]
+role = "checkpoint"
+url = "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors"
+dest = "checkpoints/flux1-dev-fp8.safetensors"
+size = 17246524772
+sha256 = "8e91b68084b53a7fc44ed2a3756d821e355ac1a7b6fe29be760c1db532f3d88a"

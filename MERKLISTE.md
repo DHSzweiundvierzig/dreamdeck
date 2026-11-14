@@ -15,15 +15,18 @@
   - [x] 1a Doku-Nachträge nach den Vorarbeiten
   - [x] 1b Startskript-Gerüst, Startbefehl für die RunPod-Vorlage
   - [x] 1c Basis-Image und ComfyUI-Version festlegen, ComfyUI installieren
-  - [ ] 1d Modelle laden (FLUX.1 [dev], T5, CLIP-L, VAE, Upscaler), vorhandene überspringen
+  - [x] 1d Modelle laden (FLUX.1 [dev], T5, CLIP-L, VAE, Upscaler), vorhandene überspringen
   - [ ] 1e LoRAs von Civitai laden, Liste im Repo pflegbar
   - [ ] 1f ComfyUI im Hintergrund starten, rclone einrichten (Token auspacken, Monatsordner, Dateinamen mit Zeitstempel)
-  - [ ] 1g Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt
+  - [ ] 1g Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt; gemessene Prüfsummen eintragen, freien Speicher prüfen (df -h)
 
 ## Etappe 2 – Dashboard-MVP
 - [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox
 - [ ] Dashboard-MVP
 - [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden
+- [ ] Python in der devbox (für Dashboard und Tests)
+- [ ] Einstellungsseite: Modell-Sets mit Status und Nachladen, evtl. Set tauschen
+- [ ] Modell-Dropdown nach Ladeart (checkpoint/split)
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten
@@ -44,3 +47,4 @@
 - [ ] Tastatur-Kürzel 1–5
 - [ ] Markierung geänderter Werte
 - [ ] Eigene Google-Client-ID für rclone, falls die geteilte Client-ID von rclone gedrosselt wird
+- [ ] Vergleich fp8 gegen fp16

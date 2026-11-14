@@ -17,6 +17,8 @@ bash -c 'rm -rf /workspace/dreamdeck; git clone --depth 1 -b "${DREAMDECK_BRANCH
    - `CIVITAI_TOKEN` = `{{ RUNPOD_SECRET_CIVITAI_TOKEN }}`
    - `RCLONE_DRIVE_TOKEN` = `{{ RUNPOD_SECRET_RCLONE_DRIVE_TOKEN }}`
    - `DREAMDECK_BRANCH` = `main` (für Tests vor dem Merge den Branch-Namen eintragen, z. B. `etappe-1`)
+   - `MODEL_SETS` (optional) = Standard `basis fp16`; für fp8 `basis fp8` eintragen. Nie beide FLUX-Sets zusammen.
+5. Container Disk: 50 GB
 
 ### Protokoll ansehen
 Im Web-Terminal des Pods:
@@ -25,6 +27,8 @@ Im Web-Terminal des Pods:
 tail -f /workspace/logs/start.log
 # RunPod-Dienste: tail -f /workspace/logs/runpod.log
 ```
+
+Hinweis: Prüfsummen, die beim ersten Lauf gemessen werden, stehen im Protokoll mit „bitte eintragen“ (suchen mit `grep "bitte" /workspace/logs/start.log`) und gehören danach in `pod/models.toml`.
 
 ## Arbeiten
 Folgt in Etappe 2.

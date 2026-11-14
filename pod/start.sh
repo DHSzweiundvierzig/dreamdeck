@@ -20,9 +20,6 @@ REPO_URL=https://github.com/DHSzweiundvierzig/dreamdeck.git
 COMFY_DIR=/workspace/ComfyUI
 COMFY_REPO=https://github.com/Comfy-Org/ComfyUI.git
 
-# Feste Versionen (COMFYUI_VERSION) aus pod/versions.env laden.
-source "$REPO_DIR/pod/versions.env"
-
 # --- Protokoll ----------------------------------------------------------
 mkdir -p "$LOG_DIR"
 # Ab hier geht alles zusätzlich ins Protokoll.
@@ -62,6 +59,16 @@ run_step() {
 
 # --- Schritte -----------------------------------------------------------
 
+# Feste Versionen und Standardwerte aus pod/versions.env laden.
+# Läuft ohne Subshell, damit die Werte in der Hauptshell bleiben.
+step_load_versions() {
+    source "$REPO_DIR/pod/versions.env" || return 1
+    if [ -z "${COMFYUI_VERSION:-}" ] || [ -z "${DEFAULT_MODEL_SETS:-}" ]; then
+        log "pod/versions.env unvollständig: COMFYUI_VERSION oder DEFAULT_MODEL_SETS ist leer"
+        return 1
+    fi
+}
+
 # Token aus der Git-Adresse entfernen und aus der Umgebung löschen.
 # Läuft ohne Subshell, damit unset in der Hauptshell wirkt.
 step_secure_repo() {
@@ -87,7 +94,7 @@ step_check_secrets() {
 # ComfyUI in der festen Version aus pod/versions.env installieren.
 # Passt der vorhandene Ordner nicht zur Version, wird er gelöscht und neu geklont.
 step_install_comfyui() {
-    local current
+    local current torch_before torch_after
     current=$(git -C "$COMFY_DIR" describe --tags 2>/dev/null || true)
     if [ -d "$COMFY_DIR" ] && [ "$current" = "$COMFYUI_VERSION" ]; then
         log "ComfyUI $COMFYUI_VERSION ist schon vorhanden – Klonen übersprungen"
@@ -99,7 +106,21 @@ step_install_comfyui() {
         git clone --depth 1 --branch "$COMFYUI_VERSION" "$COMFY_REPO" "$COMFY_DIR" || return 1
     fi
     # Kein venv: das PyTorch des Basis-Images wird genutzt.
+    # Version vor und nach pip merken – pip darf PyTorch nicht unbemerkt tauschen.
+    torch_before=$(python3 -c 'import torch; print(torch.__version__)' 2>/dev/null || true)
     python3 -m pip install --no-cache-dir --break-system-packages -r "$COMFY_DIR/requirements.txt" || return 1
+    torch_after=$(python3 -c 'import torch; print(torch.__version__)' 2>/dev/null || true)
+    if [ "$torch_before" != "$torch_after" ]; then
+        log "WARNUNG: pip hat PyTorch verändert (${torch_before:-unbekannt} → ${torch_after:-unbekannt})"
+    fi
+}
+
+# Modell-Sets laden (Standard aus pod/versions.env, überschreibbar per MODEL_SETS).
+# Die ganze Download-Logik steckt in pod/models.py.
+step_download_models() {
+    MODEL_SETS="${MODEL_SETS:-$DEFAULT_MODEL_SETS}"
+    log "Modell-Sets: $MODEL_SETS"
+    python3 "$REPO_DIR/pod/models.py" download --sets "$MODEL_SETS" --models-dir "$COMFY_DIR/models" || return 1
 }
 
 # Prüft, ob PyTorch die GPU sieht. Ohne GPU schlägt der Schritt fehl.
@@ -122,6 +143,7 @@ print("GPU:", torch.cuda.get_device_name(0))
 log "DreamDeck-Start beginnt"
 
 run_step "Repo absichern (Token aus Git-Adresse entfernen)" step_secure_repo
+run_step "Versionen laden (pod/versions.env)" step_load_versions
 
 # RunPod-Dienste (Web-Terminal, SSH) im Hintergrund starten, damit der Pod
 # auch während der Einrichtung erreichbar ist.
@@ -132,10 +154,11 @@ if [ -f /start.sh ]; then
 fi
 
 run_step "Secrets prüfen" step_check_secrets
-run_step "ComfyUI $COMFYUI_VERSION installieren" step_install_comfyui
+run_step "ComfyUI ${COMFYUI_VERSION:-?} installieren" step_install_comfyui
 run_step "GPU prüfen" step_check_gpu
+run_step "Modelle laden" step_download_models
 
-# Hier folgen die Schritte aus 1d–1f (Modelle laden, LoRAs laden, ComfyUI starten, rclone).
+# Hier folgen die Schritte aus 1e–1g (LoRAs laden, ComfyUI starten, rclone).
 
 # --- Abschluss ----------------------------------------------------------
 if [ "$SETUP_FAILED" -eq 0 ]; then

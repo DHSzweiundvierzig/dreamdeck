@@ -46,3 +46,8 @@
   - Reihenfolge: Repo absichern läuft vor den RunPod-Diensten, damit `/start.sh` den Token nicht erbt. Die RunPod-Ausgabe landet in `/workspace/logs/runpod.log`.
   - Schutzziel sind Kindprozesse (ComfyUI, Erweiterungen, Dashboard). Wer per Web-Terminal oder SSH auf dem Pod ist, ist root und kann die Startumgebung ohnehin lesen – das ist bewusst akzeptiert, Zugang hat nur, wer ins RunPod-Konto kommt.
   - Der Fallback im Startbefehl (Klonen fehlgeschlagen) läuft ohne `unset`. Akzeptiert, weil dort nur die RunPod-Dienste laufen, keine Kindprozesse von DreamDeck.
+- **14.11.2026 – Modell-Sets: fp16 (Standard) und fp8, immer nur eins pro Start** – fp16 als Einzeldateien von Comfy-Org/comfyanonymous (ohne Token ladbar), fp8 als Komplettpaket. Auswahl über `MODEL_SETS`, Standard in `pod/versions.env`. Ziel: unter 50 GB Container Disk bleiben.
+  - Ladeart je Set (`checkpoint` oder `split`) steht in `pod/models.toml`, damit das Dashboard den passenden Lader wählt. Die Einstellungen sind sonst identisch.
+  - Reserve bei Platzmangel: T5 als fp8 (`t5xxl_fp8_e4m3fn.safetensors`, ca. 4,9 GB) statt fp16.
+- **14.11.2026 – Sicherheitsregeln für Downloads** – nur die Hosts huggingface.co und civitai.com (https); Prüfsummen (sha256) aus `pod/models.toml`, fehlende werden beim ersten Lauf gemessen und protokolliert; Pickle-Dateien (.pth/.pt/.ckpt/.bin) nur mit Prüfsumme; Download erst in eine `.part`-Datei, umbenannt wird nach bestandener Prüfung; Platzprüfung vor dem Laden; Header (Tokens) werden nie ausgegeben.
+- **14.11.2026 – Download-Baustein in Python (`pod/models.py`) statt in Bash** – Grund: Das Dashboard verwendet ihn wieder (Nachladen, LoRAs), es gibt nur eine Download-Logik. Nur Standardbibliothek.
