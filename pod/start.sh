@@ -85,7 +85,7 @@ step_secure_repo() {
 step_check_secrets() {
     local name
     local missing=0
-    for name in CIVITAI_TOKEN DREAMDECK_DRIVE_TOKEN; do
+    for name in CIVITAI_TOKEN DREAMDECK_DRIVE_TOKEN DREAMDECK_DRIVE_CLIENT_ID DREAMDECK_DRIVE_CLIENT_SECRET; do
         if [ -n "${!name:-}" ]; then
             log "Secret $name: gesetzt"
         else
@@ -179,9 +179,10 @@ zipfile.ZipFile(sys.argv[1]).extract(sys.argv[2], sys.argv[3])
     rm -rf "$zip_file" "$extract_dir"
 }
 
-# rclone-Konfiguration aus DREAMDECK_DRIVE_TOKEN schreiben (base64 ohne Padding,
-# darin JSON mit Feld „token“), Token aus der Umgebung löschen, Verbindung testen
-# und Ordner DreamDeck anlegen. Der Tokeninhalt wird nie ausgegeben.
+# rclone-Konfiguration aus DREAMDECK_DRIVE_TOKEN (base64 ohne Padding, darin JSON
+# mit Feld „token“), DREAMDECK_DRIVE_CLIENT_ID und DREAMDECK_DRIVE_CLIENT_SECRET
+# schreiben, Secrets aus der Umgebung löschen, Verbindung testen und Ordner
+# DreamDeck anlegen. Token, Client-ID und Client-Secret werden nie ausgegeben.
 # Läuft ohne Subshell, damit unset in der Hauptshell wirkt.
 step_configure_rclone() {
     if ! python3 -I -c '
@@ -192,19 +193,24 @@ try:
     raw += "=" * (-len(raw) % 4)
     token = json.loads(base64.b64decode(raw))["token"]
     json.loads(token)
+    client_id = os.environ["DREAMDECK_DRIVE_CLIENT_ID"].strip()
+    client_secret = os.environ["DREAMDECK_DRIVE_CLIENT_SECRET"].strip()
 except Exception:
     print("DREAMDECK_DRIVE_TOKEN ist unbrauchbar (Dekodieren fehlgeschlagen oder Feld token fehlt)")
+    sys.exit(1)
+if not client_id or not client_secret or not client_id.endswith(".apps.googleusercontent.com"):
+    print("Client-ID oder Client-Secret unbrauchbar (leer oder vertauscht?)")
     sys.exit(1)
 token = json.dumps(json.loads(token))
 os.makedirs(os.path.dirname(conf_path), exist_ok=True)
 fd = os.open(conf_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
 with os.fdopen(fd, "w") as f:
-    f.write("[%s]\ntype = drive\nscope = drive.file\ntoken = %s\n" % (remote, token))
+    f.write("[%s]\ntype = drive\nclient_id = %s\nclient_secret = %s\nscope = drive.file\ntoken = %s\n" % (remote, client_id, client_secret, token))
 ' "$RCLONE_CONF" "$RCLONE_REMOTE"; then
-        unset DREAMDECK_DRIVE_TOKEN
+        unset DREAMDECK_DRIVE_TOKEN DREAMDECK_DRIVE_CLIENT_ID DREAMDECK_DRIVE_CLIENT_SECRET
         return 1
     fi
-    unset DREAMDECK_DRIVE_TOKEN
+    unset DREAMDECK_DRIVE_TOKEN DREAMDECK_DRIVE_CLIENT_ID DREAMDECK_DRIVE_CLIENT_SECRET
     if ! rclone --config "$RCLONE_CONF" mkdir "$RCLONE_REMOTE:$DRIVE_FOLDER"; then
         log "rclone-Verbindung fehlgeschlagen – Token abgelaufen? Siehe ANLEITUNG, Zugänge erneuern"
         return 1

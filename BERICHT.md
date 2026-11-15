@@ -1,16 +1,20 @@
-# BERICHT – Umbenennung Drive-Secret: RCLONE_DRIVE_TOKEN → DREAMDECK_DRIVE_TOKEN
+# BERICHT – Eigene Google-Client-ID für rclone
 
 ## Geänderte Stellen
-- **pod/start.sh**: 6 Stellen – Schleife in `step_check_secrets`, Kommentar über `step_configure_rclone`, `os.environ[...]` im Python-Block, Fehlermeldung, beide `unset`. Sonst keine Logik-Änderung.
-- **ANLEITUNG.md**: Vorlagenzeile der Umgebungsvariable (`DREAMDECK_DRIVE_TOKEN` = `{{ RUNPOD_SECRET_DREAMDECK_DRIVE_TOKEN }}`) und Abschnitt „Zugänge erneuern“.
-- **ARCHITEKTUR.md**: Aufzählung der Startskript-Secrets.
-- **NOTIZEN.md**: Secrets-Tabelle, Hinweis zur base64-Kodierung, neuer datierter Eintrag vom 15.11.2026 am Ende der Entscheidungen.
-- **MERKLISTE.md**: keine Änderung – kein Punkt betrifft die Umbenennung.
+- **pod/start.sh**
+  - `step_check_secrets`: Schleife prüft zusätzlich `DREAMDECK_DRIVE_CLIENT_ID` und `DREAMDECK_DRIVE_CLIENT_SECRET` (Werte werden nie ausgegeben).
+  - `step_configure_rclone`: liest beide Werte (`.strip()`), Plausibilitätsprüfung (leer oder client_id ohne Endung `.apps.googleusercontent.com` → Meldung „Client-ID oder Client-Secret unbrauchbar (leer oder vertauscht?)“, `exit 1`, ohne Werte auszugeben), conf-Reihenfolge: type, client_id, client_secret, scope, token. Kommentar über der Funktion ergänzt.
+  - Beide vorhandenen `unset`-Zeilen erweitert, keine neuen angelegt. Keine neuen Funktionen.
+- **ARCHITEKTUR.md**: Aufzählung der Startskript-Secrets um beide Namen ergänzt.
+- **NOTIZEN.md**: zwei Zeilen in der Secrets-Tabelle, neuer datierter Eintrag vom 15.11.2026 am Ende der Entscheidungen.
+- **MERKLISTE.md**: Punkt „Eigene Google-Client-ID für rclone“ mit `[x]` abgehakt.
+- **ANLEITUNG.md**: unverändert (folgt in 1n).
 
-## Prüfung
+## Abschlusskontrolle (Schritt 6)
+- `grep -rn DREAMDECK_DRIVE_CLIENT` (ohne .git): in `start.sh` überall gleich geschrieben (Schleife, Kommentar, beide `os.environ`-Zugriffe, beide `unset`); weitere Treffer nur in ARCHITEKTUR.md und NOTIZEN.md.
 - `bash -n pod/start.sh`: ohne Fehler.
-- Abschlusskontrolle: `grep -rn RCLONE_DRIVE_TOKEN` (ohne .git) findet nur noch den Begründungssatz im NOTIZEN-Eintrag vom 15.11.2026.
 
 ## Offen
-- In RunPod muss das Secret selbst umbenannt bzw. neu angelegt werden: `DREAMDECK_DRIVE_TOKEN` mit dem bisherigen base64-Wert. Das Repo kann das nicht erledigen. Ohne diesen Schritt bricht der nächste Pod-Start mit „fehlt“ ab.
-- Vorgabe-Schritte 1–5 sind erledigt; ein echter Lauf auf RunPod ist nicht getestet (Testlauf 1i steht weiter aus).
+- In RunPod müssen die Secrets `DREAMDECK_DRIVE_CLIENT_ID` und `DREAMDECK_DRIVE_CLIENT_SECRET` angelegt werden; ohne sie bricht der Pod-Start bei „Secrets prüfen“ ab.
+- Der Drive-Token muss mit derselben Client-ID neu erzeugt werden.
+- Ein echter Lauf auf RunPod ist nicht getestet.

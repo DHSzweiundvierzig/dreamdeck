@@ -12,6 +12,6 @@ Keine Ordnerstruktur festgelegt; sie ergibt sich bei der Umsetzung.
 ## Secrets (geplant)
 
 - Die Secrets liegen als RunPod-Secrets im Konto; die Pod-Vorlage gibt sie beim Start als Umgebungsvariablen weiter.
-- Das Startskript nutzt `GITHUB_TOKEN`, `CIVITAI_TOKEN` und `DREAMDECK_DRIVE_TOKEN`.
+- Das Startskript nutzt `GITHUB_TOKEN`, `CIVITAI_TOKEN`, `DREAMDECK_DRIVE_TOKEN`, `DREAMDECK_DRIVE_CLIENT_ID` und `DREAMDECK_DRIVE_CLIENT_SECRET`.
 - Das Dashboard nutzt `DASHBOARD_PASSWORD` und später (optional) `ANTHROPIC_API_KEY`.
 - Im Repo stehen nur die Namen, nie die Werte. Details und Begründungen: NOTIZEN.md.

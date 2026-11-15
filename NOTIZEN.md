@@ -13,6 +13,8 @@
     | GITHUB_TOKEN | Pod klont das private Repo | Etappe 1 |
     | CIVITAI_TOKEN | LoRAs von Civitai laden | Etappe 1 |
     | DREAMDECK_DRIVE_TOKEN | Bilder ins Google Drive | Etappe 1 |
+    | DREAMDECK_DRIVE_CLIENT_ID | Eigene Google-Client-ID für rclone | Etappe 1 |
+    | DREAMDECK_DRIVE_CLIENT_SECRET | Zugehöriger Clientschlüssel | Etappe 1 |
     | DASHBOARD_PASSWORD | Schutz der Oberfläche | Etappe 2 |
     | ANTHROPIC_API_KEY | Prompt-Helfer | Etappe 4, optional |
 
@@ -70,3 +72,4 @@
   - flock gegen Überschneidung von Schleife und manuellem Sync.
   - copy statt move, damit ComfyUI die Bilder bis zum Pod-Ende behält.
 - **15.11.2026 – Drive-Secret heißt DREAMDECK_DRIVE_TOKEN** – Grund: rclone liest `RCLONE_DRIVE_*` als eigene Optionen (`RCLONE_DRIVE_TOKEN` = Option „token“) und überschreibt damit die Konfiguration; RunPod exportiert Secrets auch in SSH-Sitzungen, dort hat der alte Name den manuellen Sync gestört.
+- **15.11.2026 – Eigene Google-Client-ID für rclone** – Grund: rclones geteilte Client-ID wird 2026 abgeschaltet. Google-Cloud-Projekt „dreamdeck“, Client-Typ Desktop-App, App veröffentlicht („In Produktion“), weil Tokens im Testmodus nach 7 Tagen ablaufen. Startseite und Datenschutz als Pflichtangabe auf dhszweiundvierzig.github.io. Der Drive-Token muss mit derselben Client-ID erzeugt werden.

@@ -51,5 +51,5 @@
 - [ ] Eigenes Pod-Image (schnellerer Start)
 - [ ] Tastatur-Kürzel 1–5
 - [ ] Markierung geänderter Werte
-- [ ] Eigene Google-Client-ID für rclone, falls die geteilte Client-ID von rclone gedrosselt wird
+- [x] Eigene Google-Client-ID für rclone, falls die geteilte Client-ID von rclone gedrosselt wird
 - [ ] Vergleich fp8 gegen fp16
