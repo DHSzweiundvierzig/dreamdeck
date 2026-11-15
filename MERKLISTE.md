@@ -11,7 +11,7 @@
 - [x] GitHub-Lese-Token für dreamdeck anlegen (fine-grained, nur Contents: Read)
 - [x] rclone-Drive-Token einmalig lokal erzeugen (Scope drive.file)
 - [x] Secrets in RunPod anlegen
-- [ ] Pod-Startskript (git clone, ComfyUI, Modelle, LoRAs, rclone) – Unterschritte:
+- [x] Pod-Startskript (git clone, ComfyUI, Modelle, LoRAs, rclone) – Unterschritte:
   - [x] 1a Doku-Nachträge nach den Vorarbeiten
   - [x] 1b Startskript-Gerüst, Startbefehl für die RunPod-Vorlage
   - [x] 1c Basis-Image und ComfyUI-Version festlegen, ComfyUI installieren
@@ -26,7 +26,8 @@
   - [x] 1l Gemessene Prüfsummen für t5, clip_l und vae eingetragen
   - [x] 1m ANLEITUNG: Vorlage (Port 22, PUBLIC_KEY, Raw-Editor), Pod-Start, SSH-Tunnel, Google-Zugang
   - [x] 1n Merkliste mit den Funden aus dem Testlauf ergänzt
-  - [ ] 1o Abschluss-Testlauf mit neuer Vorlage und neuen Secrets, danach etappe-1 nach main mergen
+  - [x] 1o Abschluss-Testlauf mit neuer Vorlage und neuen Secrets, danach etappe-1 nach main mergen
+  - [x] 1p ANLEITUNG: Hinweise zum Bearbeiten der Vorlage und zum Drive-Ordner nach Client-Wechsel
 
 ## Etappe 2 – Dashboard-MVP
 - [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox

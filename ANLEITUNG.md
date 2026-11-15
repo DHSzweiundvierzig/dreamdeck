@@ -31,6 +31,7 @@ PUBLIC_KEY=ssh-ed25519 AAAA... (eigene Zeile, siehe unten)
    - `DREAMDECK_BRANCH`: für Tests vor dem Merge den Branch-Namen eintragen, z. B. `etappe-1`.
    - `MODEL_SETS` (optional): Standard `basis fp16`; für fp8 `basis fp8` eintragen (ohne Anführungszeichen eintragen). Nie beide FLUX-Sets zusammen.
    - Die Secrets werden als Verweise angezeigt (lila); die Werte setzt RunPod erst beim Start ein.
+   - Achtung: Beim Bearbeiten einer vorhandenen Vorlage speichert RunPod geänderte Umgebungsvariablen nicht (Stand 15.11.2026). Für Änderungen die Vorlage löschen und neu anlegen; die Secrets bleiben dabei erhalten.
 
 ### Pod starten (jedes Mal)
 1. RunPod → Pods → Deploy.
@@ -103,4 +104,5 @@ Welche LoRAs der Pod beim Start lädt, steht in `pod/loras.toml`. Eingetragen wi
     Im Browser anmelden und zulassen; die Warnung „App nicht überprüft“ über „Erweitert → weiter zu DreamDeck“ bestätigen. Die Kontrollzeile muss einige hundert Zeichen zeigen. Dann in RunPod das Secret `DREAMDECK_DRIVE_TOKEN` mit Strg+V aktualisieren.
   - Danach Zwischenablage leeren mit `Set-Clipboard -Value " "` (ggf. auch im Zwischenablageverlauf Win+V) und das PowerShell-Fenster schließen.
   - Wichtig: Token, Client-ID und Client-Secret gehören zusammen. Wird der Client neu angelegt, muss auch der Token neu erzeugt werden.
+  - Nach einem Client-Wechsel legt DreamDeck im Drive einen neuen Ordner „DreamDeck“ an, weil der neue Client (Scope drive.file) die Dateien des alten nicht sieht. Alte Bilder von Hand in den neuen Ordner verschieben und den alten Ordner löschen. Der Sync nutzt rclone copy und löscht im Drive nie etwas.
 - **Hinweis:** Im Google Drive keinen DreamDeck-Ordner von Hand anlegen, das macht der Pod.

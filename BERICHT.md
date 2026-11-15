@@ -1,10 +1,13 @@
-# BERICHT – MERKLISTE.md nach Testlauf ergänzt
+# BERICHT – Erkenntnisse aus dem Abschlusstest in ANLEITUNG und MERKLISTE
 
-## Ergänzt (nur MERKLISTE.md, nichts gelöscht, keine Haken geändert)
-- **Etappe 1:** nach 1i die Unterschritte 1j, 1k, 1l, 1m, 1n (abgehakt) und 1o (offen, Abschluss-Testlauf und Merge nach main) eingefügt. Übergeordneter Punkt „Pod-Startskript …“ bleibt offen.
-- **Etappe 2:** Punkt „Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden“ um den Hinweis zu SSH- und Web-Terminal-Sitzungen ergänzt (kein neuer Punkt).
-- **Etappe 2 (Ende):** neuer offener Punkt zur Zeitzone für Datum/Uhrzeit im Dateinamen.
-- **Etappe 6 (Ende):** zwei offene Punkte – Speicher im Blick behalten (Disk 36/50 GB, RAM-Spitze 78 %) und RunPod-MCP prüfen (nur nach Freigabe).
+## ANLEITUNG.md (nur angehängt, keine neuen Abschnitte)
+- **RunPod-Vorlage (einmalig anlegen), Hinweise:** Punkt zum Bearbeiten einer bestehenden Vorlage ergänzt: RunPod speichert geänderte Umgebungsvariablen nicht (Stand 15.11.2026); Vorlage löschen und neu anlegen, Secrets bleiben erhalten.
+- **Zugänge erneuern → Google-Zugang (rclone):** Punkt nach „Wichtig: Token, Client-ID und Client-Secret …“ ergänzt: nach Client-Wechsel neuer Ordner „DreamDeck“ im Drive, alte Bilder von Hand verschieben, alten Ordner löschen; Sync nutzt rclone copy und löscht nie.
+
+## MERKLISTE.md (nur Haken gesetzt bzw. ergänzt, nichts gelöscht)
+- **Etappe 1:** 1o abgehakt; 1p ergänzt und abgehakt (ANLEITUNG: Hinweise zur Vorlage und zum Drive-Ordner nach Client-Wechsel).
+- **Etappe 1:** übergeordneter Punkt „Pod-Startskript …“ abgehakt.
 
 ## Hinweis
-- MERKLISTE.md wurde nur per Edit geändert. BERICHT.md wurde einmalig gelesen, damit sie per Write überschrieben werden kann (Werkzeugvorgabe).
+- Keine weiteren Änderungen. Nicht geprüft: Der Text wurde wie vorgegeben übernommen; die Angabe „Stand 15.11.2026“ stammt aus der Vorgabe.
+- Etappe-1-Branch `etappe-1` ist noch nicht nach `main` gemergt (laut 1o-Punkt Teil des Abschlusses, nicht Teil dieses Auftrags).
