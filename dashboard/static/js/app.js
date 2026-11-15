@@ -112,12 +112,15 @@ document.addEventListener("alpine:init", () => {
     // Bühne; phase: "leer" | "wartet" | "laedt" | "rechnet" | "fertig" | "fehler"
     stage: { phase: "leer", step: 0, steps: 0, error: "", image: null, promptId: null },
 
-    // Bilder der Sitzung, neuestes zuerst: { src, datei, ordner, promptId }
+    // Bilder vom Pod und aus der Sitzung, neuestes zuerst: { src, datei, ordner, promptId }
+    // promptId null = Bild vom Pod ohne Auftragsangaben
     history: [],
+    historyLoading: false,
 
     init() {
       // Sofort prüfen, danach regelmäßig – der einzige Timer der Oberfläche.
       this.checkHealth();
+      this.loadHistory();
       setInterval(() => this.checkHealth(), HEALTH_INTERVAL_MS);
 
       // Live-Ereignisse vom Backend, nur solange der Tab sichtbar ist oder ein
@@ -125,7 +128,10 @@ document.addEventListener("alpine:init", () => {
       this.syncEvents();
       document.addEventListener("visibilitychange", () => {
         this.syncEvents();
-        if (!document.hidden) this.checkHealth();
+        if (!document.hidden) {
+          this.checkHealth();
+          this.loadHistory();
+        }
       });
       window.addEventListener("pagehide", () => {
         if (this.eventSource) this.eventSource.close();
@@ -468,7 +474,7 @@ document.addEventListener("alpine:init", () => {
               promptId: event.prompt_id,
             }));
           // Neueste zuerst; ältere fallen hinten raus
-          this.history = [...entries, ...this.history].slice(0, HISTORY_MAX);
+          this.mergeHistory([...entries, ...this.history]);
           stage.promptId = event.prompt_id;
           if (entries.length) {
             this.showImage(entries[0]);
@@ -495,6 +501,49 @@ document.addEventListener("alpine:init", () => {
         "/api/bild?ordner=" + encodeURIComponent(bild.ordner || "") +
         "&datei=" + encodeURIComponent(bild.datei)
       );
+    },
+
+    // Setzt den Verlauf – die einzige Stelle, die `history` schreibt:
+    // entdoppelt nach src (erster Eintrag gewinnt), kürzt auf HISTORY_MAX.
+    mergeHistory(entries) {
+      const seen = new Set();
+      this.history = entries
+        .filter((entry) => !seen.has(entry.src) && seen.add(entry.src))
+        .slice(0, HISTORY_MAX);
+    },
+
+    // Holt den Verlauf vom Pod und führt ihn mit dem bekannten zusammen.
+    // Bei Fehlern bleibt der bisherige Verlauf still stehen.
+    async loadHistory() {
+      if (this.historyLoading) return;
+      this.historyLoading = true;
+      try {
+        const response = await fetch("/api/verlauf", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!data || !Array.isArray(data.bilder)) return;
+        const podEntries = data.bilder
+          .filter((bild) => bild && bild.datei)
+          .map((bild) => ({
+            src: this.imageUrl(bild),
+            datei: bild.datei,
+            ordner: bild.ordner || "",
+            promptId: null,
+          }));
+        const podSrcs = new Set(podEntries.map((entry) => entry.src));
+        const known = new Map(this.history.map((entry) => [entry.src, entry]));
+        // Was nur die Sitzung kennt, ist neuer und kommt nach vorn
+        const newer = this.history.filter((entry) => !podSrcs.has(entry.src));
+        const fromPod = podEntries.map((entry) => known.get(entry.src) || entry);
+        this.mergeHistory([...newer, ...fromPod]);
+        if (!this.stage.image && !this.isRunning && this.history.length) {
+          this.showImage(this.history[0]);
+        }
+      } catch (err) {
+        // Netzfehler o. Ä.: Verlauf unverändert lassen, keine Meldung
+      } finally {
+        this.historyLoading = false;
+      }
     },
 
     // Holt ein Bild aus dem Verlauf auf die Bühne.

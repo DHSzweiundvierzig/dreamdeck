@@ -160,6 +160,8 @@ async def events(request: Request):
 
 
 IMAGE_SUFFIXES = (".png", ".webp", ".jpg", ".jpeg")
+# Höchstzahl der Bilder im Verlauf (/api/verlauf)
+HISTORY_LIMIT = 60
 
 
 @app.get("/api/bild")
@@ -177,6 +179,31 @@ async def image(
     if not (target.is_relative_to(base) and target.is_file() and target.suffix.lower() in IMAGE_SUFFIXES):
         return JSONResponse({"fehler": "Bild nicht gefunden"}, status_code=404)
     return FileResponse(target, headers={"Cache-Control": "private, max-age=86400"})
+
+
+@app.get("/api/verlauf")
+def history():
+    """Liefert die neuesten Bilder aus dem Output-Ordner (nach Änderungszeit).
+
+    Normales def, damit das Durchsuchen im Threadpool läuft.
+    Felder datei/ordner wie im Ereignis „fertig".
+    """
+    base = Path(OUTPUT_DIR).resolve()
+    if not base.is_dir():
+        return {"bilder": []}
+    found = []
+    for path in base.rglob("*"):
+        try:
+            if path.suffix.lower() in IMAGE_SUFFIXES and path.is_file():
+                found.append((path.stat().st_mtime, path))
+        except OSError:
+            continue  # Datei während des Durchsuchens verschwunden
+    found.sort(key=lambda item: item[0], reverse=True)
+    images = []
+    for _, path in found[:HISTORY_LIMIT]:
+        folder = path.parent.relative_to(base).as_posix()
+        images.append({"datei": path.name, "ordner": "" if folder == "." else folder})
+    return {"bilder": images}
 
 
 # Statische Dateien zuletzt einhängen, damit die API-Routen Vorrang haben.

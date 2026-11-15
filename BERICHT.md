@@ -1,22 +1,17 @@
-# Bericht – Etappe 2 · Schritt 2l Korrektur: Live-Verbindung nur bei sichtbarem Tab oder laufendem Auftrag
+# Bericht – Etappe 2 · Schritt 2m: Verlauf vom Pod
 
 ## Änderungen je Datei
-- `dashboard/static/js/app.js`: Neuer Zustand `eventSource`, neue Methode `syncEvents()` als einzige Stelle zum Öffnen und Schließen der SSE-Verbindung (Soll = Tab sichtbar oder Auftrag läuft); `init()` ruft sie auf und hängt `visibilitychange` (mit `checkHealth()` beim Sichtbarwerden) und `pagehide` an; `generate()` ruft sie nach dem Absenden, `onEvent` am Ende von „fertig“ und „fehler“ auf.
-- `MERKLISTE.md`: 2l mit „Browser-Kontrolle bestanden am 15.11.2026“ abgehakt, neuer Punkt „2l Korrektur“ darunter, drei neue Ausbau-Punkte in Etappe 2.
-- `NOTIZEN.md`: Chrome-Grenze von 6 Verbindungen und die Regel „sichtbar oder eigener Auftrag“ beim Eintrag zum Live-Fortschritt ergänzt.
+- `dashboard/app.py`: Konstante `HISTORY_LIMIT = 60` neben `IMAGE_SUFFIXES`; neuer Endpunkt `GET /api/verlauf` (normales `def`, Threadpool) direkt unter `/api/bild`. Durchsucht `OUTPUT_DIR` rekursiv, nur Dateien mit Endung aus `IMAGE_SUFFIXES`, sortiert nach Änderungszeit absteigend, höchstens 60, Rückgabe `{"bilder": [{"datei", "ordner"}]}`; fehlender Ordner → leere Liste.
+- `dashboard/static/js/app.js`: `mergeHistory(entries)` als einzige Schreibstelle für `history` (entdoppelt nach `src`, kürzt auf `HISTORY_MAX`); „fertig“ nutzt sie. Neue `loadHistory()` mit Flag `historyLoading`, Zusammenführen Sitzung/Pod (Sitzungs-Einträge ohne Pod-Treffer nach vorn, bekannte Einträge behalten `promptId`), leere Bühne ohne laufenden Auftrag zeigt das erste Bild; Fehler still. Aufruf einmal in `init()` und im vorhandenen `visibilitychange`-Handler bei sichtbarem Tab (zusammen mit `checkHealth()`). Kommentar über `history` angepasst. Kein neuer Timer, kein neuer Listener.
+- `MERKLISTE.md`: „2l Korrektur“ abgehakt, 2m offen eingefügt (vor 2j), neuer Punkt unter Etappe 3 (Galerie aus Google Drive).
+- `NOTIZEN.md`: Eintrag zu 2m.
+- `index.html`: unverändert.
 
 ## Prüfungen
 - `node --check dashboard/static/js/app.js`: ohne Fehler.
-- Ablauf mit Attrappe (Node, Fake-`EventSource`, Fake-`document`/`window`; Skript im Scratchpad, nicht im Repo) durchgespielt:
-  - sichtbar → Verbindung offen ✔
-  - versteckt ohne Auftrag → zu ✔
-  - wieder sichtbar → neu offen ✔
-  - versteckt mit laufendem Auftrag → bleibt offen ✔
-  - nach „fertig“ im versteckten Tab → zu ✔
-  - `pagehide` → zu, `eventSource` null ✔
+- `app.py`: Syntaxprüfung nicht möglich (`python3` fehlt in dieser Umgebung); Endpunkt nicht gestartet.
+- Browser-Kontrolle auf neuem Pod steht aus.
 
 ## Auffälligkeiten
-- Das Grep-Werkzeug stand in dieser Sitzung nicht zur Verfügung; gesucht wurde mit `grep` per Bash, nur lesend (wie in CLAUDE.md vorgesehen).
-- Im Hintergrund-Tab ohne Auftrag wird `live` nicht mehr aktualisiert; beim Sichtbarwerden holt der Hub den letzten Stand sofort nach.
-- Ein Auftrag, der im versteckten Tab endet, ohne dass „fertig“ oder „fehler“ ankommt (z. B. Verbindungsabbruch), hält die Verbindung offen, bis der Tab wieder sichtbar wird oder die Seite schließt.
-- Echte Browser-Kontrolle (mehrere Tabs in Chrome) steht noch aus; deshalb bleibt „2l Korrektur“ in der Merkliste offen.
+- Das Grep-Werkzeug stand nicht zur Verfügung; gesucht wurde mit `grep` per Bash, nur lesend.
+- Der Verlauf zeigt nur Bilder seit Pod-Start; dauerhafte Quelle wird das Drive (Etappe 3).
