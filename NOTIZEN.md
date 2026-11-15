@@ -29,6 +29,7 @@
 - **Bis zu 6 LoRAs gleichzeitig** – genug Spielraum für Kombinationen, ohne die Oberfläche zu überladen.
 - **Oberfläche nach Entwurf „Variante B“** – Pipeline-Boxen 1–5 oben, Prompt-Leiste, Bühne mit Verlauf rechts, Einstellungsseite.
   - Pipeline-Boxen tragen statt Nummern einen Code im Cyberpunk-Stil (DD//01·MDL …). Beim Start sind alle Boxen zu – später erklärt ein abschaltbares Klick-Tutorial die Bedienung Schritt für Schritt.
+  - Geschlossene Boxen zeigen eine Zusammenfassung der Einstellungen. Seed-Modus vorerst nur „zufällig“ und „fest“; der benutzte Seed wird nach dem Absenden ins Feld übernommen.
 - **Bezeichner im Code auf Englisch, Doku und Kommentare auf Deutsch** – vorläufig, solange nichts anderes kommt.
 - **ngrok aus der 1.0 wird nicht mehr genutzt** – Authtoken am 11.11.2026 rotiert.
 - **14.11.2026 – Claude Code läuft mit dem Firmenkonto** – bewusste Entscheidung, so gewünscht.
@@ -39,7 +40,7 @@
   - Backend: Python mit FastAPI, uvicorn und httpx. Grund: gleiche Sprache wie ComfyUI; FastAPI baut auf Starlette auf, das auch im GW2-Dashboard läuft.
   - Verbindung zu ComfyUI: HTTP für Aufträge und Bilder, Websocket-Client für den Fortschritt. Grund: ComfyUI meldet Fortschritt nur per Websocket.
   - Nur DreamDeck ist von außen erreichbar, ComfyUI nur intern. Grund: Ein Passwort schützt alles.
-  - Frontend: schlichtes HTML/CSS/JS ohne Build-Schritt, aufgeteilt in ES-Module statt globaler Variablen. Grund: einfach zu warten; ES-Module vermeiden Namenskonflikte, wenn das Projekt wächst.
+  - Frontend: schlichtes HTML/CSS/JS ohne Build-Schritt, als klassisches Script mit einer Alpine-Komponente. Grund: läuft ohne Modul-Lader; Namenskonflikte vermeidet die Komponente. Bei Bedarf später in mehrere Dateien aufteilen.
   - Alpine.js für die datengetriebenen Bereiche (Step-Boxen, LoRA-Liste). Die Datei liegt fest im Repo statt per CDN, Version wird beim Einbinden in Etappe 2 festgelegt und gepinnt. Grund: Oberfläche aktualisiert sich aus den Daten von selbst; kein Build nötig.
   - Live-Fortschritt per Server-Sent Events, alles andere per fetch. Grund: Fortschritt ändert sich mehrmals pro Sekunde, Polling wäre zu träge.
   - Tests direkt auf dem Pod gegen das echte ComfyUI (15.11.2026, ersetzt den Plan mit Spiel-ComfyUI auf der devbox). Grund: Die Pod-Kosten sind bewusst akzeptiert; getestet wird gegen die echte API, und das Spiel-ComfyUI entfällt als eigener Bauteil.

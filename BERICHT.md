@@ -1,31 +1,35 @@
-# Bericht – Etappe 2 · Schritt 2f (Oberflächen-Gerüst nach Variante B)
-
-## Neue Dateien
-- `dashboard/static/vendor/alpine-3.17.5.min.js`: Alpine.js 3.17.5 fest im Repo (55 935 Bytes, per curl von jsDelivr geladen).
-- `dashboard/static/css/dreamdeck.css`: Tokens auf `:root`, Layout für Kopfzeile, Pipeline-Boxen, Prompt-Leiste, Bühne und Verlauf; ein `@keyframes dd-flicker`, Zustände nur über die Klassen `is-open` und `dd-status--…`.
-- `dashboard/static/js/app.js`: klassisches Script, registriert bei `alpine:init` die Komponente `dreamdeck` (`open`, `toggle`, `isOpen`, `steps`, `comfy`) und fragt `/api/health` sofort und danach alle 30 s ab – mit dem einzigen `setInterval` der Oberfläche.
+# Bericht – Etappe 2 · Schritt 2g (Format-Box, Zusammenfassungen, Generieren-Knopf)
 
 ## Geänderte Dateien
-- `dashboard/static/index.html`: Platzhalterseite komplett ersetzt durch das Gerüst (header, nav, drei sections, aside); die fünf Boxen entstehen per `x-for` aus `steps` und einer Vorlage.
-- `ARCHITEKTUR.md`: Punkt „Oberfläche“ auf „(Gerüst umgesetzt)“ gestellt und um Ablageort und Alpine-Version ergänzt.
-- `NOTIZEN.md`: Unterpunkt zu den Box-Codes und zum späteren Klick-Tutorial beim Eintrag „Oberfläche nach Entwurf Variante B“ ergänzt.
-- `MERKLISTE.md`: drei neue Punkte unter „Etappe 2 – Ausbau“ angehängt; 2f bleibt offen bis zur Browser-Kontrolle.
+- `dashboard/static/js/app.js`: neue Zustände (Prompt, Formate, Größen, eigene Maße, Seed, Anzahl, Meldung), Hilfsfunktion `snap()`, Getter `dims`/`width`/`height`/`megapixels`/`mpText`, dazu `formatLabel()`, `shapeStyle()`, `rotate()`, `setCustom()`, `summary(n)`, `say()` und `generate()`.
+- `dashboard/static/index.html`: Zusammenfassung `<dl class="dd-summary">` in der Box-Vorlage (nur bei geschlossener Box), Format-Regler in Box 3 per `x-if`, Prompt-Feld und Generieren-Knopf an den Zustand gebunden, Meldungszeile mit `aria-live`.
+- `dashboard/static/css/dreamdeck.css`: Tokens `--dd-warn` und `--dd-cyan-bg`, Grundregel um `input, select` erweitert, neue Klassen für Zusammenfassung, Auswahl-Knöpfe, Formvorschau, Auflösung, Felder und Meldung; die drei Felder stapeln sich unter 600px.
+- `ARCHITEKTUR.md`: Zeile „Oberfläche“ nennt jetzt das klassische Script mit einer Alpine-Komponente statt ES-Modulen.
+- `NOTIZEN.md`: Frontend-Zeile ebenso angeglichen; beim Eintrag zur Oberfläche Zusammenfassungen und Seed-Modus ergänzt.
+- `MERKLISTE.md`: 2f abgehakt mit Browser-Kontrolle vom 15.11.2026, zwei neue Punkte unter „Ausbau“; 2g bleibt offen.
 - `BERICHT.md`: dieser Bericht.
 
-## Prüfsumme
-- sha256 von `alpine-3.17.5.min.js`: `b4036e9e9ac22fa6f6ae1ba292e015e1f3e9c85d0d79e73e4c8eb9bb139b522e` – stimmt mit dem erwarteten Wert überein.
+## Berechnung von Breite und Höhe – Beispiel 9:16, Groß, quer
+Gerechnet wird nur im Getter `dims`; `width` und `height` lesen daraus.
+1. Grundmaß 9:16: 768 × 1344. Quer tauscht die Kanten: 1344 × 768.
+2. Faktor „Groß“ = √1,6 ≈ 1,2649 je Kante: 1700,04 × 971,45.
+3. `snap()` rundet auf 16 und begrenzt auf 256–2048: **1696 × 976**.
+4. 1696 × 976 / 1 000 000 = 1,655 → Anzeige „1,7 MP“, Format-Beschriftung „16:9“.
 
 ## Geprüft
 - `node --check dashboard/static/js/app.js`: Syntax in Ordnung.
-- Genau ein `setInterval` in `app.js`, genau ein `@keyframes` in der CSS, feste Farbwerte nur im `:root`-Block.
-- `vendor/` wird von `.gitignore` nicht erfasst.
-- **Nicht geprüft:** die Seite im Browser. Auf der devbox gibt es kein Python, das Dashboard ließ sich hier nicht starten. Optik, Auf-/Zuklappen, Flackern und Statuspunkt sind also noch ungesehen.
+- Rechenlogik und `generate()` in node mit nachgebautem Alpine und fetch durchgespielt: Start 768 × 1344 (1,0 MP), Beispiel oben, Klein quer 1040 × 592, 1:1 Groß 1296 × 1296, Eigenes 1024 × 1536 und gedreht, 2048 × 2048 mit „4,2 MP · sehr groß“; Seed-Prüfung lehnt leer, „1.5“, „-3“, „4294967296“ und „12x“ ab; Erfolg, `fehler`, `detail` und Netzwerkfehler liefern die vorgesehenen Meldungen, `busy` ist danach immer false.
+- Weiterhin genau ein `setInterval` in `app.js`, feste Farbwerte nur im `:root`-Block.
+- **Nicht geprüft:** die Seite im Browser und ein echter Auftrag an `/api/generate`. Optik der Format-Box, Zusammenfassungen und Meldungszeile sind noch ungesehen.
 
 ## Auffälligkeiten
-- **Zwei Zusatz-Tokens:** `--dd-on-cyan` (#04161A, Schrift auf dem Generieren-Knopf) und `--dd-cyan-glow` (rgba(34,228,240,.35), Leuchten). Beide Werte standen im Auftrag als feste Farben; als Tokens bleibt die Regel „Farben nur über Tokens“ gewahrt.
-- **„Weiß“ beim aktiven Menüpunkt** ist `--dd-text` (#ECECF2), kein reines Weiß – aus demselben Grund.
-- **Widerspruch in der Doku:** ARCHITEKTUR.md und NOTIZEN.md nennen weiterhin „ES-Module statt globaler Variablen“, `app.js` ist laut Auftrag aber ein klassisches Script. Nicht geändert, weil nicht beauftragt – sollte in einem der nächsten Schritte angeglichen werden.
-- **Geschlossene Boxen neben einer offenen** strecken sich auf deren Höhe (mind. 320px), damit die Reihe einheitlich bleibt; sind alle zu, ist die Reihe niedrig. Sollen geschlossene Boxen auch dann niedrig bleiben, genügt `align-items: flex-start` an `.dd-pipeline`.
-- **`x-cloak` am body:** Lädt Alpine nicht, bleibt die Seite leer (so beauftragt).
-- **Ausgegraute Links** (Navigation, „Zur Galerie“) sind `<a>` ohne `href` mit `aria-disabled="true"` – nicht anklickbar und nicht per Tab erreichbar.
+- **Größen-Knöpfe bei „Eigenes“:** Punkt 2 verlangt „deaktiviert“, Punkt 6b „stattdessen zwei Zahlenfelder“. Umgesetzt ist 6b – die Knöpfe werden durch die Felder B und H ersetzt.
+- **Ein Drehen-Knopf** für das aktive Format, wie vorgeschlagen. Querformat bleibt beim Wechsel des Formats eingeschaltet (9:16 quer → 2:3 ist dann 3:2).
+- **Kurzhinweis im Kopf von Box 3** („9:16 · 768 × 1344“) ist weiter ein fester Text und stimmt nach einer Änderung nicht mehr mit der Zusammenfassung überein. Vorschlag: Hinweis bei Box 3 entfernen oder live machen.
+- **Anzahl Bilder** wird im Browser nicht begrenzt: ein leeres Feld oder Werte außerhalb 1–4 lehnt das Backend ab, Meldung „Eingaben ungültig“.
+- **Ungültige eigene Maße** (leer, Text) werden zu 256.
+- **Antwort ohne JSON** (z. B. Serverfehler 500) ergibt „Fehler <Statuscode>“ – dieser Fall stand nicht im Auftrag.
+- **Seed-Obergrenze:** die Oberfläche prüft 0–4294967295, das Backend nur „≥ 0“.
+- **Zusatz:** `shapeStyle(f)` und `baseDims(f)` für die Formvorschau; `say()` bündelt das Setzen der Meldung. `later` bei Box 3 entfernt, weil der Platzhalter dort entfällt.
+- **Drehen-Knopf** ist 44px groß (Klasse `dd-iconbtn--large`), die Auswahl-Knöpfe mindestens 44px hoch.
 - Nichts committet.

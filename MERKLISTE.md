@@ -36,7 +36,7 @@
   - [x] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), ANLEITUNG zum SSH-Tunnel – erster Pod-Test (bestanden am 15.11.2026)
   - [x] 2d ComfyUI-Anbindung: Workflow aus Vorlage (split) mit LoRA-Kette, POST /api/generate, filename_prefix mit Monatsordner und Zeitstempel (Europe/Berlin) – Pod-Test bestanden am 15.11.2026, Bild identisch mit dem ComfyUI-Testbild
   - [x] 2e Fortschritt: ComfyUI-Websocket als Server-Sent Events an die Oberfläche – Pod-Test bestanden am 15.11.2026 (start, fortschritt 1–20, fertig mit Bild, warteschlange)
-  - [ ] 2f Oberflächen-Gerüst nach Variante B, Alpine.js fest im Repo und gepinnt
+  - [x] 2f Oberflächen-Gerüst nach Variante B, Alpine.js fest im Repo und gepinnt – Browser-Kontrolle bestanden am 15.11.2026
   - [ ] 2g Prompt-Leiste: Prompt, Format-Presets, Seed, Batch-Anzahl
   - [ ] 2h LoRA-Auswahl (bis 6 gleichzeitig, mit Stärke-Regler)
   - [ ] 2i Live-Fortschritt und Ergebnisse auf der Bühne
@@ -53,6 +53,8 @@
 - [ ] Klick-Tutorial mit An/Aus-Schalter: Erklär-Boxen an jedem Menü/Dropdown, Schritt für Schritt
 - [ ] GPU-Name in der Kopfzeile (aus ComfyUI /system_stats über /api/health durchreichen)
 - [ ] Anzeige „Drive-Sync aktiv“ in der Kopfzeile – Datenquelle klären
+- [ ] Seed-Modus „+1 je Bild“ / „−1 je Bild“ (braucht mehrere Aufträge statt eines Batches)
+- [ ] Deko-Streifen der Boxen näher am Entwurf (schräg, größer, Farbe)
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten

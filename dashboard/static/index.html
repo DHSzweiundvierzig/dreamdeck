@@ -69,8 +69,110 @@
             </div>
           </div>
 
+          <!-- Zusammenfassung, solange die Box zu ist -->
+          <dl class="dd-summary" x-show="!isOpen(step.n)">
+            <template x-for="row in summary(step.n)" :key="row.k">
+              <div class="dd-summary__row">
+                <dt x-text="row.k"></dt>
+                <dd x-text="row.v"></dd>
+              </div>
+            </template>
+          </dl>
+
           <div class="dd-box__body" :id="'dd-box-body-' + step.n">
-            <div class="dd-placeholder" x-text="step.later"></div>
+            <!-- Box 3: Format-Regler -->
+            <template x-if="step.n === 3">
+              <div class="dd-format">
+
+                <div class="dd-format__block">
+                  <p class="dd-fieldlabel" id="dd-ratio-label">Seitenverhältnis</p>
+                  <div class="dd-format__line">
+                    <div class="dd-choices" role="group" aria-labelledby="dd-ratio-label">
+                      <template x-for="f in formats" :key="f.key">
+                        <button type="button" class="dd-choice dd-choice--shape"
+                                @click="format = f.key"
+                                :aria-pressed="(format === f.key).toString()">
+                          <span class="dd-shape" aria-hidden="true"
+                                :class="{ 'dd-shape--dashed': f.key === 'eigen' }"
+                                :style="shapeStyle(f)"></span>
+                          <span x-text="formatLabel(f)"></span>
+                        </button>
+                      </template>
+                    </div>
+                    <button type="button" class="dd-iconbtn dd-iconbtn--large"
+                            @click="rotate()"
+                            :disabled="format === '1:1'"
+                            aria-label="Hoch/Quer drehen" title="Hoch/Quer drehen">
+                      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M13 8a5 5 0 1 1-1.6-3.7"/>
+                        <polyline points="13,2 13,5 10,5"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="dd-format__block">
+                  <p class="dd-fieldlabel" id="dd-size-label">Größe</p>
+                  <div class="dd-format__line">
+                    <template x-if="!isCustom">
+                      <div class="dd-choices" role="group" aria-labelledby="dd-size-label">
+                        <template x-for="s in sizes" :key="s.key">
+                          <button type="button" class="dd-choice"
+                                  @click="size = s.key"
+                                  :aria-pressed="(size === s.key).toString()"
+                                  x-text="s.label"></button>
+                        </template>
+                      </div>
+                    </template>
+                    <template x-if="isCustom">
+                      <div class="dd-choices" role="group" aria-labelledby="dd-size-label">
+                        <div class="dd-field dd-field--inline">
+                          <label class="dd-fieldlabel" for="dd-custom-w">B</label>
+                          <input class="dd-input dd-input--dim" id="dd-custom-w" type="number"
+                                 min="256" max="2048" step="16"
+                                 :value="custom.w" @change="setCustom('w', $event.target)">
+                        </div>
+                        <div class="dd-field dd-field--inline">
+                          <label class="dd-fieldlabel" for="dd-custom-h">H</label>
+                          <input class="dd-input dd-input--dim" id="dd-custom-h" type="number"
+                                 min="256" max="2048" step="16"
+                                 :value="custom.h" @change="setCustom('h', $event.target)">
+                        </div>
+                      </div>
+                    </template>
+                    <div class="dd-resolution">
+                      <span class="dd-resolution__dims" x-text="width + ' × ' + height"></span>
+                      <span class="dd-resolution__mp" :class="{ 'is-warn': megapixels > 2 }" x-text="mpText"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="dd-fields">
+                  <div class="dd-field">
+                    <label class="dd-fieldlabel" for="dd-seed">Seed</label>
+                    <input class="dd-input" id="dd-seed" type="text" inputmode="numeric"
+                           x-model="seed" :readonly="seedMode !== 'fest'">
+                  </div>
+                  <div class="dd-field">
+                    <label class="dd-fieldlabel" for="dd-seed-mode">Seed-Modus</label>
+                    <select class="dd-input" id="dd-seed-mode" x-model="seedMode">
+                      <option value="zufaellig">zufällig</option>
+                      <option value="fest">fest</option>
+                    </select>
+                  </div>
+                  <div class="dd-field">
+                    <label class="dd-fieldlabel" for="dd-batch">Anzahl Bilder</label>
+                    <input class="dd-input" id="dd-batch" type="number" min="1" max="4"
+                           x-model.number="batch">
+                  </div>
+                </div>
+
+              </div>
+            </template>
+            <!-- Alle anderen Boxen: Platzhalter -->
+            <template x-if="step.n !== 3">
+              <div class="dd-placeholder" x-text="step.later"></div>
+            </template>
           </div>
 
           <svg class="dd-box__stripes" viewBox="0 0 34 8" aria-hidden="true">
@@ -84,9 +186,16 @@
     <section class="dd-panel dd-prompt" aria-label="Prompt">
       <label class="dd-label" for="dd-prompt-input">Dein Prompt</label>
       <div class="dd-prompt__row">
-        <textarea class="dd-prompt__input" id="dd-prompt-input" rows="3"></textarea>
-        <button type="button" class="dd-generate" disabled title="folgt in 2g">Generieren</button>
+        <textarea class="dd-prompt__input" id="dd-prompt-input" rows="3"
+                  x-model="prompt" maxlength="2000" placeholder="Was soll entstehen?"></textarea>
+        <button type="button" class="dd-generate"
+                :disabled="busy || !prompt.trim()"
+                @click="generate()"
+                x-text="busy ? 'Sende …' : 'Generieren'">Generieren</button>
       </div>
+      <p class="dd-message" aria-live="polite"
+         :class="messageKind ? 'dd-message--' + messageKind : ''"
+         x-text="message"></p>
     </section>
 
     <div class="dd-lower">

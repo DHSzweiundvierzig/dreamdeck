@@ -23,6 +23,9 @@
   /* Zusatz-Tokens: Schrift auf Cyan-Fläche und Leuchten in Cyan */
   --dd-on-cyan: #04161A;
   --dd-cyan-glow: rgba(34, 228, 240, .35);
+  /* Warnfarbe (sehr große Bilder) und Fläche aktiver Auswahl-Knöpfe */
+  --dd-warn: #FFC46B;
+  --dd-cyan-bg: #0E2226;
 
   --dd-head: 'Space Grotesk', system-ui, sans-serif;
   --dd-body: Inter, system-ui, sans-serif;
@@ -48,7 +51,7 @@ body {
   font: 14px/1.45 var(--dd-body);
 }
 
-button, textarea { font: inherit; color: inherit; }
+button, textarea, input, select { font: inherit; color: inherit; }
 
 :focus-visible {
   outline: 2px solid var(--dd-cyan);
@@ -280,6 +283,142 @@ button, textarea { font: inherit; color: inherit; }
 }
 .dd-box__body .dd-placeholder { flex: 1; }
 
+/* Zusammenfassung der geschlossenen Box: Bezeichnung links, Wert rechts */
+.dd-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 12px;
+}
+.dd-summary__row { display: contents; }
+.dd-summary dt { color: var(--dd-muted); }
+.dd-summary dd {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--dd-mono);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Format-Regler (Box 3) ---------- */
+
+.dd-format {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dd-format__block { min-width: 0; }
+.dd-format__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* Kleine Beschriftung über Gruppen und Feldern */
+.dd-fieldlabel {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--dd-muted);
+}
+
+.dd-choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* Auswahl-Knopf: Formate und Größen */
+.dd-choice {
+  min-height: 44px;
+  padding: 6px 12px;
+  background: var(--dd-chip);
+  border: 1px solid var(--dd-line2);
+  border-radius: 8px;
+  color: var(--dd-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.dd-choice:hover { color: var(--dd-text); }
+.dd-choice[aria-pressed="true"] {
+  background: var(--dd-cyan-bg);
+  border-color: var(--dd-cyan);
+  color: var(--dd-text);
+}
+/* Format-Knopf: Formvorschau über der Beschriftung, unten bündig */
+.dd-choice--shape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 56px;
+  min-height: 64px;
+}
+
+.dd-shape {
+  display: block;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+.dd-shape--dashed { border-style: dashed; }
+
+.dd-iconbtn--large { width: 44px; height: 44px; }
+.dd-iconbtn:disabled { opacity: .4; cursor: not-allowed; }
+/* Das Drehen-Symbol dreht sich nicht mit dem Aufklapp-Pfeil */
+.dd-box.is-open .dd-iconbtn--large svg { transform: none; }
+
+/* Auflösung rechts neben der Größenwahl */
+.dd-resolution {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-family: var(--dd-mono);
+}
+.dd-resolution__dims { font-size: 16px; color: var(--dd-cyan-text); }
+.dd-resolution__mp { font-size: 12px; color: var(--dd-muted); }
+.dd-resolution__mp.is-warn { color: var(--dd-warn); }
+
+/* Felder mit Beschriftung */
+.dd-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.dd-field { min-width: 0; }
+.dd-field--inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dd-field--inline .dd-fieldlabel { margin: 0; }
+
+.dd-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--dd-field);
+  border: 1px solid var(--dd-line2);
+  border-radius: 8px;
+  font: 400 13px/1.2 var(--dd-mono);
+}
+.dd-input--dim { width: 96px; }
+.dd-input[readonly] {
+  color: var(--dd-dim);
+  border-color: var(--dd-line);
+}
+
+@media (max-width: 600px) {
+  .dd-fields { grid-template-columns: 1fr; }
+}
+
 /* Einmaliges Flackern beim Aufklappen */
 @keyframes dd-flicker {
   0%   { opacity: 1; }
@@ -335,6 +474,16 @@ button, textarea { font: inherit; color: inherit; }
   box-shadow: none;
   cursor: not-allowed;
 }
+
+/* Meldung unter der Knopf-Zeile; leer ohne Höhe */
+.dd-message {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--dd-muted);
+}
+.dd-message:empty { display: none; }
+.dd-message--ok { color: var(--dd-ok); }
+.dd-message--err { color: var(--dd-err); }
 
 /* ---------- Bühne und Verlauf ---------- */
 
