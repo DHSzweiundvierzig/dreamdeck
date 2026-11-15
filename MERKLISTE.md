@@ -30,15 +30,26 @@
   - [x] 1p ANLEITUNG: Hinweise zum Bearbeiten der Vorlage und zum Drive-Ordner nach Client-Wechsel
 
 ## Etappe 2 – Dashboard-MVP
-- [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox
-- [ ] Dashboard-MVP
-- [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden – dabei beachten: RunPod exportiert alle Secrets auch in SSH- und Web-Terminal-Sitzungen
-- [ ] Python in der devbox (für Dashboard und Tests)
+- [ ] Dashboard-MVP – Unterschritte:
+  - [x] 2a Merkliste und Doku für Etappe 2 neu gegliedert
+  - [ ] 2b Backend-Gerüst: FastAPI, requirements.txt mit festen Versionen, liest pod/paths.env, Startseite, /api/health
+  - [ ] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), pod/update.sh (Branch wechseln, neuen Stand holen, Dashboard neu starten), ANLEITUNG zum SSH-Tunnel – erster Pod-Test
+  - [ ] 2d ComfyUI-Anbindung: Workflow bauen (checkpoint/split), Auftrag senden, filename_prefix mit Zeitstempel (Europe/Berlin)
+  - [ ] 2e Fortschritt: ComfyUI-Websocket als Server-Sent Events an die Oberfläche
+  - [ ] 2f Oberflächen-Gerüst nach Variante B, Alpine.js fest im Repo und gepinnt
+  - [ ] 2g Prompt-Leiste: Prompt, Format-Presets, Seed, Batch-Anzahl
+  - [ ] 2h LoRA-Auswahl (bis 6 gleichzeitig, mit Stärke-Regler)
+  - [ ] 2i Live-Fortschritt und Ergebnisse auf der Bühne
+  - [ ] 2j Passwortschutz (DASHBOARD_PASSWORD), Erreichbarkeit (RunPod-Proxy oder SSH-Tunnel), RunPod-Dienste – ggf. neue Vorlage
+  - [ ] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen
+- [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden – dabei beachten: RunPod exportiert alle Secrets auch in SSH- und Web-Terminal-Sitzungen (→ 2j)
+- [ ] Dashboard liest Pfade und Port aus pod/paths.env (→ 2b)
+- [x] Zeitzone für Datum/Uhrzeit im Dateinamen festlegen (ComfyUI-Oberfläche nutzt die Ortszeit des Browsers) – entschieden: Europe/Berlin, Umsetzung in 2d
+
+## Etappe 2 – Ausbau (nach dem MVP)
 - [ ] Einstellungsseite: Modell-Sets mit Status und Nachladen, evtl. Set tauschen
 - [ ] Modell-Dropdown nach Ladeart (checkpoint/split)
 - [ ] LoRA per Civitai-Link oder Versionsnummer nachladen (nutzt civitai_lora/download_file)
-- [ ] Dashboard liest Pfade und Port aus pod/paths.env
-- [ ] Zeitzone für Datum/Uhrzeit im Dateinamen festlegen (ComfyUI-Oberfläche nutzt die Ortszeit des Browsers)
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten
@@ -57,6 +68,8 @@
 - [ ] Vergleichsansicht
 - [ ] Serverless
 - [ ] Eigenes Pod-Image (schnellerer Start)
+- [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox
+- [ ] Python in der devbox (für Dashboard und Tests)
 - [ ] Tastatur-Kürzel 1–5
 - [ ] Markierung geänderter Werte
 - [x] Eigene Google-Client-ID für rclone, falls die geteilte Client-ID von rclone gedrosselt wird

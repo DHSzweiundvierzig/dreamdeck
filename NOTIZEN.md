@@ -41,7 +41,7 @@
   - Frontend: schlichtes HTML/CSS/JS ohne Build-Schritt, aufgeteilt in ES-Module statt globaler Variablen. Grund: einfach zu warten; ES-Module vermeiden Namenskonflikte, wenn das Projekt wächst.
   - Alpine.js für die datengetriebenen Bereiche (Step-Boxen, LoRA-Liste). Die Datei liegt fest im Repo statt per CDN, Version wird beim Einbinden in Etappe 2 festgelegt und gepinnt. Grund: Oberfläche aktualisiert sich aus den Daten von selbst; kein Build nötig.
   - Live-Fortschritt per Server-Sent Events, alles andere per fetch. Grund: Fortschritt ändert sich mehrmals pro Sekunde, Polling wäre zu träge.
-  - Tests auf der devbox ohne GPU mit einem Spiel-ComfyUI, das Fake-Bilder liefert. Grund: Der teure Pod wird erst gebraucht, wenn es ernst wird.
+  - Tests direkt auf dem Pod gegen das echte ComfyUI (15.11.2026, ersetzt den Plan mit Spiel-ComfyUI auf der devbox). Grund: Die Pod-Kosten sind bewusst akzeptiert; getestet wird gegen die echte API, und das Spiel-ComfyUI entfällt als eigener Bauteil.
 - **14.11.2026 – Basis-Image: schlankes RunPod-PyTorch-Image, ComfyUI installiert unser Skript selbst in fester Version** (Version in einer Datei im Repo, Update nur bewusst) – Gründe: volle Kontrolle, jeder Schritt lesbar; die Startzeit bestimmen ohnehin die Modelle; fertige ComfyUI-Images machen ComfyUI oft öffentlich erreichbar. Image runpod/pytorch:2.1.0-cu1300-torch2130-ubuntu2404 (PyTorch 2.13.0, CUDA 13.0 statt 13.2, weil 13.2 einen neueren Host-Treiber braucht und die Auswahl einschränkt); ComfyUI v0.45.2; kein eigenes venv, das PyTorch des Images wird genutzt. Eigenes Image als Idee in Etappe 6.
 - **14.11.2026 – Branch des Pods über `DREAMDECK_BRANCH`, Standard `main`** – Grund: Testläufe vor dem Merge.
 - **14.11.2026 – RunPod-Dienste (Web-Terminal, SSH, Jupyter) laufen in Etappe 1 mit** – Grund: Fehlersuche. Ob sie abgeschaltet werden, wird in Etappe 2 entschieden.
@@ -73,3 +73,8 @@
   - copy statt move, damit ComfyUI die Bilder bis zum Pod-Ende behält.
 - **15.11.2026 – Drive-Secret heißt DREAMDECK_DRIVE_TOKEN** – Grund: rclone liest `RCLONE_DRIVE_*` als eigene Optionen (`RCLONE_DRIVE_TOKEN` = Option „token“) und überschreibt damit die Konfiguration; RunPod exportiert Secrets auch in SSH-Sitzungen, dort hat der alte Name den manuellen Sync gestört.
 - **15.11.2026 – Eigene Google-Client-ID für rclone** – Grund: rclones geteilte Client-ID wird 2026 abgeschaltet. Google-Cloud-Projekt „dreamdeck“, Client-Typ Desktop-App, App veröffentlicht („In Produktion“), weil Tokens im Testmodus nach 7 Tagen ablaufen. Startseite und Datenschutz als Pflichtangabe auf dhszweiundvierzig.github.io. Der Drive-Token muss mit derselben Client-ID erzeugt werden.
+- **15.11.2026 – Entwicklungsablauf in Etappe 2**
+  - Neuer Code kommt per `pod/update.sh` auf den laufenden Pod (Branch wechseln, neuen Stand holen, Dashboard neu starten). Die Vorlage bleibt auf `DREAMDECK_BRANCH=main`. Grund: RunPod-Vorlagen lassen sich nicht bearbeiten, gespeicherte Variablen gehen verloren.
+  - Das Dashboard lauscht bis Schritt 2j nur auf 127.0.0.1, der Zugriff läuft per SSH-Tunnel. Grund: nichts öffentlich, solange der Passwortschutz fehlt.
+  - Reihenfolge je Schritt: Umsetzung → Commit + Sync → update.sh auf dem Pod → Browser-Kontrolle; Befunde als weiterer Commit. Grund: Der Pod holt den Code aus GitHub.
+  - Zeitstempel im Dateinamen in Europe/Berlin, gesetzt vom Backend. Grund: unabhängig von der Zeitzone von Browser und Pod.
