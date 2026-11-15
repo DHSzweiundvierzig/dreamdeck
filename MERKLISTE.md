@@ -33,8 +33,8 @@
 - [ ] Dashboard-MVP – Unterschritte:
   - [x] 2a Merkliste und Doku für Etappe 2 neu gegliedert
   - [x] 2b Backend-Gerüst: FastAPI, requirements.txt mit festen Versionen, liest pod/paths.env, Startseite, /api/health
-  - [ ] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), ANLEITUNG zum SSH-Tunnel – erster Pod-Test
-  - [ ] 2d ComfyUI-Anbindung: Workflow bauen (checkpoint/split), Auftrag senden, filename_prefix mit Zeitstempel (Europe/Berlin)
+  - [x] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), ANLEITUNG zum SSH-Tunnel – erster Pod-Test (bestanden am 15.11.2026)
+  - [ ] 2d ComfyUI-Anbindung: Workflow aus Vorlage (split) mit LoRA-Kette, POST /api/generate, filename_prefix mit Monatsordner und Zeitstempel (Europe/Berlin)
   - [ ] 2e Fortschritt: ComfyUI-Websocket als Server-Sent Events an die Oberfläche
   - [ ] 2f Oberflächen-Gerüst nach Variante B, Alpine.js fest im Repo und gepinnt
   - [ ] 2g Prompt-Leiste: Prompt, Format-Presets, Seed, Batch-Anzahl
