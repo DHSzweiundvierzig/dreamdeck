@@ -1,4 +1,7 @@
 """DreamDeck-Backend: FastAPI-Gerüst."""
+import asyncio
+import contextlib
+import json
 import secrets
 import uuid
 from contextlib import asynccontextmanager
@@ -6,14 +9,17 @@ from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .config import COMFY_URL
+from .events import EventHub, listen_comfyui
 from .workflow import build_flux_workflow
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+# Kommt so lange kein Ereignis, hält ein Kommentar die SSE-Leitung offen.
+SSE_PING_SECONDS = 15.0
 
 
 class LoraIn(BaseModel):
@@ -41,11 +47,16 @@ class GenerateIn(BaseModel):
 async def lifespan(app: FastAPI):
     # Dieser Client wird ab 2d für alle ComfyUI-Aufrufe genutzt.
     app.state.comfy = httpx.AsyncClient(base_url=COMFY_URL, timeout=2.0)
-    # Wird ab 2e für den Fortschritt per Websocket gebraucht.
+    # Gleiche Kennung für Aufträge und Websocket, damit ComfyUI den Fortschritt hierher meldet.
     app.state.client_id = uuid.uuid4().hex
+    app.state.events = EventHub()
+    listener = asyncio.create_task(listen_comfyui(app.state.events, app.state.client_id))
     try:
         yield
     finally:
+        listener.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await listener
         await app.state.comfy.aclose()
 
 
@@ -96,6 +107,32 @@ async def generate(job: GenerateIn, request: Request):
             status_code=422,
         )
     return {"prompt_id": answer["prompt_id"], "seed": seed, "filename_prefix": filename_prefix}
+
+
+@app.get("/api/events")
+async def events(request: Request):
+    """Liefert die Fortschritts-Ereignisse als Server-Sent Events."""
+    hub = request.app.state.events
+
+    async def stream():
+        queue = hub.subscribe()
+        try:
+            yield ": verbunden\n\n"
+            while True:
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=SSE_PING_SECONDS)
+                except asyncio.TimeoutError:
+                    yield ": ping\n\n"
+                    continue
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        finally:
+            hub.unsubscribe(queue)
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 # Statische Dateien zuletzt einhängen, damit die API-Routen Vorrang haben.
