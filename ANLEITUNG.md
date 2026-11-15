@@ -28,7 +28,7 @@ PUBLIC_KEY=ssh-ed25519 AAAA... (eigene Zeile, siehe unten)
 
    Hinweise:
    - `PUBLIC_KEY` = Inhalt der Datei `id_ed25519.pub` (öffentlicher Schlüssel, kein Geheimnis). Ohne ihn startet RunPod keinen SSH-Dienst und Port 22 bleibt zu. In die Zwischenablage holen mit `Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub | Set-Clipboard`. Nie die Datei `id_ed25519` ohne Endung verwenden (privater Schlüssel).
-   - `DREAMDECK_BRANCH`: für Tests vor dem Merge den Branch-Namen eintragen, z. B. `etappe-1`.
+   - `DREAMDECK_BRANCH`: für Tests vor dem Merge den Branch-Namen eintragen, z. B. `etappe-1`. Der Pod holt den Code nur beim Start. Neuer Stand auf dem Branch → neuen Pod starten.
    - `MODEL_SETS` (optional): Standard `basis fp16`; für fp8 `basis fp8` eintragen (ohne Anführungszeichen eintragen). Nie beide FLUX-Sets zusammen.
    - Die Secrets werden als Verweise angezeigt (lila); die Werte setzt RunPod erst beim Start ein.
    - Achtung: Beim Bearbeiten einer vorhandenen Vorlage speichert RunPod geänderte Umgebungsvariablen nicht (Stand 15.11.2026). Für Änderungen die Vorlage löschen und neu anlegen; die Secrets bleiben dabei erhalten.
@@ -49,6 +49,7 @@ tail -f /workspace/logs/start.log
 # RunPod-Dienste: tail -f /workspace/logs/runpod.log
 # ComfyUI: tail -f /workspace/logs/comfyui.log
 # Sync: tail -f /workspace/logs/sync.log
+# Dashboard: tail -f /workspace/logs/dashboard.log
 ```
 
 Hinweis: Prüfsummen, die beim ersten Lauf gemessen werden, stehen im Protokoll mit „bitte eintragen“ (suchen mit `grep "bitte" /workspace/logs/start.log`) und gehören danach in `pod/models.toml`.
@@ -57,12 +58,12 @@ Hinweis: Prüfsummen, die beim ersten Lauf gemessen werden, stehen im Protokoll 
 Welche LoRAs der Pod beim Start lädt, steht in `pod/loras.toml`. Eingetragen wird nur die Civitai-Versionsnummer: auf der Modellseite die Version wählen, die Zahl hinter `modelVersionId=` in der Adresse ist die Versionsnummer; den Namen als Kommentar dahinter schreiben. Dateiname, Größe und Prüfsumme holt der Pod selbst von Civitai. Erlaubt sind nur LoRAs für Flux.1 D im Format SafeTensor. Die Liste bewusst klein halten – weitere LoRAs kommen später übers Dashboard.
 
 ## Arbeiten
-### ComfyUI per SSH-Tunnel öffnen (bis Etappe 2)
+### ComfyUI und Dashboard per SSH-Tunnel öffnen
 1. In RunPod beim Pod → Connect → unter „SSH over exposed TCP“ die IP und den äußeren Port für Port 22 ablesen.
 2. In Windows PowerShell (IP und Port einsetzen):
-   `ssh -L 8188:127.0.0.1:8188 root@<IP> -p <Port> -i $env:USERPROFILE\.ssh\id_ed25519`
+   `ssh -L 8188:127.0.0.1:8188 -L 8000:127.0.0.1:8000 root@<IP> -p <Port> -i $env:USERPROFILE\.ssh\id_ed25519`
    Beim ersten Mal die Frage nach dem Vertrauen mit `yes` beantworten.
-3. Fenster offen lassen, im Browser `http://localhost:8188` öffnen.
+3. Fenster offen lassen. Im Browser: Dashboard `http://localhost:8000`, ComfyUI `http://localhost:8188`.
 4. Zum Beenden in der SSH-Sitzung `exit`; damit ist auch der Tunnel zu.
 
 ## Pod beenden

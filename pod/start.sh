@@ -14,7 +14,7 @@ set -o pipefail
 
 # --- Konstanten ---------------------------------------------------------
 # Gemeinsame Pfade (REPO_DIR, LOG_DIR, COMFY_DIR, OUTPUT_DIR, COMFY_PORT,
-# RCLONE_CONF, RCLONE_REMOTE, DRIVE_FOLDER) stehen nur in pod/paths.env.
+# DASHBOARD_PORT, DASHBOARD_VENV, RCLONE_CONF, RCLONE_REMOTE, DRIVE_FOLDER) stehen nur in pod/paths.env.
 if ! source "$(dirname "${BASH_SOURCE[0]}")/paths.env"; then
     echo "DreamDeck: pod/paths.env fehlt"
     [ -f /start.sh ] && /start.sh &
@@ -217,21 +217,14 @@ with os.fdopen(fd, "w") as f:
     fi
 }
 
-# ComfyUI im Hintergrund starten, nur auf 127.0.0.1 erreichbar (--listen wird
-# bewusst ausdrücklich gesetzt), ohne CIVITAI_TOKEN (wird nicht geerbt). Bilder
-# liegen außerhalb des ComfyUI-Ordners, weil ein Versionswechsel diesen Ordner
-# löscht. Wartet höchstens 180 s, bis /system_stats antwortet.
-step_start_comfyui() {
-    local pid waited=0
-    mkdir -p "$OUTPUT_DIR" || return 1
-    env -u CIVITAI_TOKEN nohup python3 "$COMFY_DIR/main.py" --listen 127.0.0.1 --port "$COMFY_PORT" \
-        --output-directory "$OUTPUT_DIR" > "$LOG_DIR/comfyui.log" 2>&1 &
-    pid=$!
-    log "ComfyUI gestartet (PID $pid), Protokoll: $LOG_DIR/comfyui.log"
-
-    while [ "$waited" -lt 180 ]; do
+# Wartet, bis eine Adresse antwortet. Prüft alle 5 s, ob der Prozess (PID) noch
+# lebt und ob die URL antwortet; gibt nach MAX_SEKUNDEN auf.
+# Aufruf: wait_for_http NAME PID URL MAX_SEKUNDEN LOGDATEI
+wait_for_http() {
+    local name=$1 pid=$2 url=$3 max=$4 logfile=$5 waited=0
+    while [ "$waited" -lt "$max" ]; do
         if ! kill -0 "$pid" 2>/dev/null; then
-            log "ComfyUI wurde vorzeitig beendet – siehe $LOG_DIR/comfyui.log"
+            log "$name wurde vorzeitig beendet – siehe $logfile"
             return 1
         fi
         if python3 -c '
@@ -240,15 +233,30 @@ try:
     urllib.request.urlopen(sys.argv[1], timeout=3)
 except Exception:
     sys.exit(1)
-' "http://127.0.0.1:$COMFY_PORT/system_stats"; then
-            log "ComfyUI läuft auf 127.0.0.1:$COMFY_PORT"
+' "$url"; then
+            log "$name läuft"
             return 0
         fi
         sleep 5
         waited=$((waited + 5))
     done
-    log "ComfyUI antwortet nach 180 s nicht – siehe $LOG_DIR/comfyui.log"
+    log "$name antwortet nach $max s nicht – siehe $logfile"
     return 1
+}
+
+# ComfyUI im Hintergrund starten, nur auf 127.0.0.1 erreichbar (--listen wird
+# bewusst ausdrücklich gesetzt), ohne CIVITAI_TOKEN (wird nicht geerbt). Bilder
+# liegen außerhalb des ComfyUI-Ordners, weil ein Versionswechsel diesen Ordner
+# löscht. Wartet höchstens 180 s, bis /system_stats antwortet.
+step_start_comfyui() {
+    local pid
+    mkdir -p "$OUTPUT_DIR" || return 1
+    env -u CIVITAI_TOKEN nohup python3 "$COMFY_DIR/main.py" --listen 127.0.0.1 --port "$COMFY_PORT" \
+        --output-directory "$OUTPUT_DIR" > "$LOG_DIR/comfyui.log" 2>&1 &
+    pid=$!
+    log "ComfyUI gestartet (PID $pid), Protokoll: $LOG_DIR/comfyui.log"
+
+    wait_for_http "ComfyUI auf 127.0.0.1:$COMFY_PORT" "$pid" "http://127.0.0.1:$COMFY_PORT/system_stats" 180 "$LOG_DIR/comfyui.log"
 }
 
 # Sync-Schleife (pod/sync.sh loop) im Hintergrund starten, ohne CIVITAI_TOKEN.
@@ -256,6 +264,30 @@ except Exception:
 step_start_sync() {
     env -u CIVITAI_TOKEN nohup bash "$REPO_DIR/pod/sync.sh" loop >> "$LOG_DIR/sync.log" 2>&1 &
     log "Sync-Schleife gestartet (PID $!), Protokoll: $LOG_DIR/sync.log"
+}
+
+# Eigene venv für das Dashboard anlegen (falls noch nicht vorhanden) und die
+# gepinnten Abhängigkeiten installieren.
+step_install_dashboard() {
+    if [ ! -x "$DASHBOARD_VENV/bin/python" ]; then
+        if ! python3 -m venv "$DASHBOARD_VENV"; then
+            log "venv konnte nicht angelegt werden – fehlt python3-venv im Image?"
+            return 1
+        fi
+    fi
+    "$DASHBOARD_VENV/bin/pip" install --no-cache-dir -r "$REPO_DIR/dashboard/requirements.txt" || return 1
+}
+
+# Dashboard im Hintergrund starten, nur auf 127.0.0.1, ohne CIVITAI_TOKEN.
+# --app-dir statt Verzeichniswechsel. Wartet höchstens 30 s auf /api/health.
+step_start_dashboard() {
+    local pid
+    env -u CIVITAI_TOKEN nohup "$DASHBOARD_VENV/bin/uvicorn" dashboard.app:app --app-dir "$REPO_DIR" \
+        --host 127.0.0.1 --port "$DASHBOARD_PORT" > "$LOG_DIR/dashboard.log" 2>&1 &
+    pid=$!
+    log "Dashboard gestartet (PID $pid), Protokoll: $LOG_DIR/dashboard.log"
+
+    wait_for_http "Dashboard auf 127.0.0.1:$DASHBOARD_PORT" "$pid" "http://127.0.0.1:$DASHBOARD_PORT/api/health" 30 "$LOG_DIR/dashboard.log"
 }
 
 # --- Ablauf -------------------------------------------------------------
@@ -281,6 +313,8 @@ run_step "rclone ${RCLONE_VERSION:-?} installieren" step_install_rclone
 run_step "rclone einrichten" step_configure_rclone
 run_step "ComfyUI starten" step_start_comfyui
 run_step "Sync-Schleife starten" step_start_sync
+run_step "Dashboard einrichten" step_install_dashboard
+run_step "Dashboard starten" step_start_dashboard
 
 # --- Abschluss ----------------------------------------------------------
 if [ "$SETUP_FAILED" -eq 0 ]; then

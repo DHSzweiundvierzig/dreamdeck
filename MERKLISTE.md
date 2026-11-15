@@ -33,7 +33,7 @@
 - [ ] Dashboard-MVP – Unterschritte:
   - [x] 2a Merkliste und Doku für Etappe 2 neu gegliedert
   - [x] 2b Backend-Gerüst: FastAPI, requirements.txt mit festen Versionen, liest pod/paths.env, Startseite, /api/health
-  - [ ] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), pod/update.sh (Branch wechseln, neuen Stand holen, Dashboard neu starten), ANLEITUNG zum SSH-Tunnel – erster Pod-Test
+  - [ ] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), ANLEITUNG zum SSH-Tunnel – erster Pod-Test
   - [ ] 2d ComfyUI-Anbindung: Workflow bauen (checkpoint/split), Auftrag senden, filename_prefix mit Zeitstempel (Europe/Berlin)
   - [ ] 2e Fortschritt: ComfyUI-Websocket als Server-Sent Events an die Oberfläche
   - [ ] 2f Oberflächen-Gerüst nach Variante B, Alpine.js fest im Repo und gepinnt
@@ -41,7 +41,7 @@
   - [ ] 2h LoRA-Auswahl (bis 6 gleichzeitig, mit Stärke-Regler)
   - [ ] 2i Live-Fortschritt und Ergebnisse auf der Bühne
   - [ ] 2j Passwortschutz (DASHBOARD_PASSWORD), Erreichbarkeit (RunPod-Proxy oder SSH-Tunnel), RunPod-Dienste – ggf. neue Vorlage
-  - [ ] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen
+  - [ ] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen und Vorlage wieder mit DREAMDECK_BRANCH=main anlegen
 - [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden – dabei beachten: RunPod exportiert alle Secrets auch in SSH- und Web-Terminal-Sitzungen (→ 2j)
 - [x] Dashboard liest Pfade und Port aus pod/paths.env (→ 2b)
 - [x] Zeitzone für Datum/Uhrzeit im Dateinamen festlegen (ComfyUI-Oberfläche nutzt die Ortszeit des Browsers) – entschieden: Europe/Berlin, Umsetzung in 2d
