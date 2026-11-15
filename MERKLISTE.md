@@ -20,7 +20,7 @@
   - [x] 1f ComfyUI im Hintergrund starten (nur intern, Bilder unter /workspace/output)
   - [x] 1g rclone installieren (v1.75.2 mit Prüfsumme) und einrichten (Token auspacken, Ordner DreamDeck/)
   - [x] 1h Sync: pod/sync.sh (Schleife + letzter Sync), Pfade in pod/paths.env, ANLEITUNG „Pod beenden“
-  - [ ] 1i Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt; gemessene Prüfsummen eintragen, freien Speicher prüfen (df -h); vorher klären, wie die ComfyUI-Oberfläche trotz „nur intern“ erreichbar ist
+  - [x] 1i Erster Testlauf auf RunPod als Abnahme – vorher GPU-Wahl; dabei prüfen, ob der Civitai-Download mit „Read Only“ klappt; gemessene Prüfsummen eintragen, freien Speicher prüfen (df -h); vorher klären, wie die ComfyUI-Oberfläche trotz „nur intern“ erreichbar ist
 
 ## Etappe 2 – Dashboard-MVP
 - [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox

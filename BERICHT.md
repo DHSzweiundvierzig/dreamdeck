@@ -1,20 +1,18 @@
-# BERICHT – Eigene Google-Client-ID für rclone
+# BERICHT – ANLEITUNG.md an den Testlauf angepasst
 
-## Geänderte Stellen
-- **pod/start.sh**
-  - `step_check_secrets`: Schleife prüft zusätzlich `DREAMDECK_DRIVE_CLIENT_ID` und `DREAMDECK_DRIVE_CLIENT_SECRET` (Werte werden nie ausgegeben).
-  - `step_configure_rclone`: liest beide Werte (`.strip()`), Plausibilitätsprüfung (leer oder client_id ohne Endung `.apps.googleusercontent.com` → Meldung „Client-ID oder Client-Secret unbrauchbar (leer oder vertauscht?)“, `exit 1`, ohne Werte auszugeben), conf-Reihenfolge: type, client_id, client_secret, scope, token. Kommentar über der Funktion ergänzt.
-  - Beide vorhandenen `unset`-Zeilen erweitert, keine neuen angelegt. Keine neuen Funktionen.
-- **ARCHITEKTUR.md**: Aufzählung der Startskript-Secrets um beide Namen ergänzt.
-- **NOTIZEN.md**: zwei Zeilen in der Secrets-Tabelle, neuer datierter Eintrag vom 15.11.2026 am Ende der Entscheidungen.
-- **MERKLISTE.md**: Punkt „Eigene Google-Client-ID für rclone“ mit `[x]` abgehakt.
-- **ANLEITUNG.md**: unverändert (folgt in 1n).
+## Geänderte Abschnitte (nur ANLEITUNG.md)
+- **RunPod-Vorlage:** Punkte 1–3 unverändert. Punkt 4 (Expose TCP Ports 22/SSH, keine HTTP Ports) und Punkt 5 (Container Disk 50 GB, Volume Disk 0 GB) ersetzt. Neu Punkt 6: Environment Variables per Raw editor mit den fünf Secrets, `DREAMDECK_BRANCH` und `PUBLIC_KEY`, dazu Hinweise (PUBLIC_KEY, BRANCH, MODEL_SETS, lila Verweise).
+- **Neu angelegt:** „### Pod starten (jedes Mal)“ (6 Schritte), nach der Vorlage.
+- **Arbeiten:** „Folgt in Etappe 2.“ ersetzt durch „### ComfyUI per SSH-Tunnel öffnen (bis Etappe 2)“.
+- **Zugänge erneuern:** Punkt „rclone-Token“ ersetzt durch „Google-Zugang (rclone)“ mit eigener Client-ID, Client-Datei, Token-Erzeugung und Aufräumen der Zwischenablage.
+- Unverändert: Protokoll ansehen, LoRAs beim Start, Pod beenden, GitHub-Token, Hinweis zum DreamDeck-Ordner.
 
-## Abschlusskontrolle (Schritt 6)
-- `grep -rn DREAMDECK_DRIVE_CLIENT` (ohne .git): in `start.sh` überall gleich geschrieben (Schleife, Kommentar, beide `os.environ`-Zugriffe, beide `unset`); weitere Treffer nur in ARCHITEKTUR.md und NOTIZEN.md.
-- `bash -n pod/start.sh`: ohne Fehler.
+## Abschlusskontrolle
+- `RCLONE_DRIVE_TOKEN` und „Folgt in Etappe 2“: keine Treffer in ANLEITUNG.md.
+- Die fünf Secret-Namen (`GITHUB_TOKEN`, `CIVITAI_TOKEN`, `DREAMDECK_DRIVE_TOKEN`, `DREAMDECK_DRIVE_CLIENT_ID`, `DREAMDECK_DRIVE_CLIENT_SECRET`) stehen im Raw-Block je genau einmal und kommen mit gleicher Schreibweise in pod/start.sh vor (nur gegrept, nicht geändert).
+
+## Merkliste
+- Kein passender offener Punkt vorhanden, nichts abgehakt.
 
 ## Offen
-- In RunPod müssen die Secrets `DREAMDECK_DRIVE_CLIENT_ID` und `DREAMDECK_DRIVE_CLIENT_SECRET` angelegt werden; ohne sie bricht der Pod-Start bei „Secrets prüfen“ ab.
-- Der Drive-Token muss mit derselben Client-ID neu erzeugt werden.
-- Ein echter Lauf auf RunPod ist nicht getestet.
+- `PUBLIC_KEY` wird in start.sh nicht ausgewertet (RunPod-eigener Mechanismus), daher nicht in der Namensprüfung enthalten.
