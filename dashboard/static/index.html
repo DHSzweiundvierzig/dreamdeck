@@ -261,12 +261,63 @@
 
     <div class="dd-lower">
       <section class="dd-stage" aria-label="Bühne">
-        <p>Hier erscheint dein Bild</p>
+        <p x-show="stage.phase === 'leer'">Hier erscheint dein Bild</p>
+
+        <!-- Statuszeile: sichtbar bei laufendem Auftrag und Fehler; „Fertig“ nur für Vorlesehilfen -->
+        <p class="dd-stage__status" aria-live="polite"
+           :class="{ 'is-err': stage.phase === 'fehler', 'dd-sr-only': !isRunning && stage.phase !== 'fehler' }"
+           x-text="stageText"></p>
+
+        <!-- Fortschrittsbalken: unbestimmt beim Warten und Laden, sonst nach Schritten -->
+        <div class="dd-progress" role="progressbar" aria-label="Fortschritt" aria-valuemin="0"
+             x-show="isRunning"
+             :aria-valuenow="progress === null ? null : stage.step"
+             :aria-valuemax="progress === null ? null : stage.steps">
+          <div class="dd-progress__fill"
+               :class="{ 'is-indeterminate': progress === null }"
+               :style="{ width: progress === null ? '100%' : (progress * 100) + '%' }"></div>
+        </div>
+
+        <!-- Bild mit Info-Spalte; bleibt bei neuem Auftrag und bei Fehler sichtbar -->
+        <div class="dd-stage__result" x-show="stage.image">
+          <div class="dd-stage__picture">
+            <img class="dd-stage__image" alt="Erzeugtes Bild" :src="stage.image?.src">
+          </div>
+          <div class="dd-stage__side">
+            <div class="dd-panel dd-info">
+              <dl class="dd-summary">
+                <template x-for="(row, i) in stageInfo" :key="i">
+                  <div class="dd-summary__row">
+                    <dt x-text="row.k"></dt>
+                    <dd x-text="row.v"></dd>
+                  </div>
+                </template>
+              </dl>
+            </div>
+            <div class="dd-actions">
+              <button type="button" class="dd-btn" disabled title="folgt in Etappe 3–5">★ Favorit</button>
+              <button type="button" class="dd-btn" disabled title="folgt in Etappe 3–5">Variante</button>
+              <button type="button" class="dd-btn" disabled title="folgt in Etappe 3–5">Als Rezept</button>
+              <button type="button" class="dd-btn dd-btn--magenta" disabled title="folgt in Etappe 3–5">Für Civitai</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <aside class="dd-panel dd-history" aria-label="Verlauf">
         <h2 class="dd-label dd-label--muted">Verlauf</h2>
-        <div class="dd-placeholder dd-history__empty">noch keine Bilder</div>
+        <div class="dd-placeholder dd-history__empty" x-show="!history.length && !isRunning">noch keine Bilder</div>
+        <div class="dd-history__list" x-show="history.length || isRunning">
+          <div class="dd-placeholder dd-history__empty" x-show="isRunning">läuft …</div>
+          <template x-for="entry in history" :key="entry.src">
+            <button type="button" class="dd-thumb"
+                    :class="{ 'is-current': entry.src === stage.image?.src }"
+                    :aria-current="entry.src === stage.image?.src ? 'true' : null"
+                    @click="showImage(entry)">
+              <img :src="entry.src" width="96" height="168" loading="lazy" alt="Bild aus dem Verlauf">
+            </button>
+          </template>
+        </div>
         <a class="dd-history__link" role="link" aria-disabled="true" title="folgt später">Zur Galerie</a>
       </aside>
     </div>

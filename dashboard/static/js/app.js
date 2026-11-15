@@ -5,6 +5,9 @@ document.addEventListener("alpine:init", () => {
   // Abstand der Statusabfrage in Millisekunden
   const HEALTH_INTERVAL_MS = 30000;
 
+  // Höchstzahl der Bilder im Verlauf, damit die Seite schlank bleibt
+  const HISTORY_MAX = 60;
+
   // Texte zum ComfyUI-Status
   const COMFY_LABELS = {
     unbekannt: "prüfe …",
@@ -96,10 +99,36 @@ document.addEventListener("alpine:init", () => {
     message: "",
     messageKind: "",
 
+    // Live-Stand: SSE-Verbindung zu ComfyUI (Ereignis „verbindung“) und Länge der Warteschlange
+    live: false,
+    queueCount: 0,
+
+    // Angaben je prompt_id, beim Absenden festgehalten (für die Info-Karte)
+    jobs: {},
+
+    // Bühne; phase: "leer" | "wartet" | "laedt" | "rechnet" | "fertig" | "fehler"
+    stage: { phase: "leer", step: 0, steps: 0, error: "", image: null, promptId: null },
+
+    // Bilder der Sitzung, neuestes zuerst: { src, datei, ordner, promptId }
+    history: [],
+
     init() {
       // Sofort prüfen, danach regelmäßig – der einzige Timer der Oberfläche.
       this.checkHealth();
       setInterval(() => this.checkHealth(), HEALTH_INTERVAL_MS);
+
+      // Live-Ereignisse vom Backend. EventSource verbindet sich bei Abbruch
+      // selbst neu, deshalb braucht es hier keinen eigenen Timer.
+      const source = new EventSource("/api/events");
+      source.onmessage = (message) => {
+        let event;
+        try {
+          event = JSON.parse(message.data);
+        } catch (error) {
+          return;
+        }
+        this.onEvent(event);
+      };
     },
 
     // Klick auf die offene Box schließt sie wieder.
@@ -221,6 +250,12 @@ document.addEventListener("alpine:init", () => {
       return name.split(/[\\/]/).pop().replace(/\.safetensors$/i, "");
     },
 
+    // Stärke einer LoRA als Text mit Komma („0,80“).
+    // Number(): während des Tippens kann das Zahlenfeld kurz leer sein
+    strengthText(lora) {
+      return (Number(lora.strength) || 0).toFixed(2).replace(".", ",");
+    },
+
     // Dateien, die noch nicht gewählt sind – nur sie bietet die Auswahl an,
     // deshalb kann keine Datei doppelt in loras landen.
     get freeLoraFiles() {
@@ -272,10 +307,9 @@ document.addEventListener("alpine:init", () => {
           return [{ k: "Modell", v: "FLUX.1 [dev]" }];
         case 2:
           if (!this.activeLoras.length) return [{ k: "LoRAs", v: "keine" }];
-          // Number(): während des Tippens kann das Zahlenfeld kurz leer sein
           return this.activeLoras.map((lora) => ({
             k: this.loraLabel(lora.name),
-            v: (Number(lora.strength) || 0).toFixed(2).replace(".", ","),
+            v: this.strengthText(lora),
           }));
         case 3:
           return [
@@ -315,6 +349,17 @@ document.addEventListener("alpine:init", () => {
         seed = text;
       }
 
+      // Angaben für die Info-Karte als Kopie festhalten, damit spätere
+      // Änderungen an den Reglern sie nicht verfälschen.
+      const job = {
+        width: this.width,
+        height: this.height,
+        format: this.formatLabel(this.formats.find((f) => f.key === this.format)),
+        loras: this.activeLoras.map((lora) => this.loraLabel(lora.name) + " · " + this.strengthText(lora)),
+        batch: this.batch,
+        prompt: this.prompt,
+      };
+
       this.busy = true;
       try {
         const response = await fetch("/api/generate", {
@@ -334,6 +379,19 @@ document.addEventListener("alpine:init", () => {
         if (response.ok) {
           this.seed = String(data.seed);
           this.say("Auftrag angenommen · Seed " + this.seed, "ok");
+          this.jobs[data.prompt_id] = { ...job, seed: this.seed };
+          // Kam schon ein Ereignis zu diesem Auftrag (SSE war schneller als
+          // die Antwort), bleibt dessen Stand stehen. Ein Bild bleibt sichtbar.
+          if (this.stage.promptId !== data.prompt_id) {
+            this.stage = {
+              ...this.stage,
+              phase: "wartet",
+              step: 0,
+              steps: 0,
+              error: "",
+              promptId: data.prompt_id,
+            };
+          }
         } else if (data.fehler) {
           this.say(data.fehler, "err");
         } else if (data.detail) {
@@ -345,6 +403,125 @@ document.addEventListener("alpine:init", () => {
         this.say("Dashboard nicht erreichbar", "err");
       } finally {
         this.busy = false;
+      }
+    },
+
+    // Verarbeitet alle Live-Ereignisse vom Backend. Ereignisse zu unbekannten
+    // prompt_ids (z. B. aus einem anderen Tab) werden genauso angezeigt, nur
+    // fehlen dann die Angaben in der Info-Karte.
+    onEvent(event) {
+      const stage = this.stage;
+      switch (event.typ) {
+        case "verbindung":
+          this.live = event.ok === true;
+          break;
+        case "warteschlange":
+          this.queueCount = event.anzahl ?? 0;
+          break;
+        case "start":
+          stage.phase = "laedt";
+          stage.promptId = event.prompt_id;
+          stage.step = 0;
+          stage.steps = 0;
+          stage.error = "";
+          break;
+        case "fortschritt":
+          stage.phase = "rechnet";
+          stage.promptId = event.prompt_id;
+          stage.step = event.schritt ?? 0;
+          stage.steps = event.von ?? 0;
+          break;
+        case "fertig": {
+          const entries = (event.bilder || [])
+            .filter((bild) => bild && bild.datei)
+            .map((bild) => ({
+              src: this.imageUrl(bild),
+              datei: bild.datei,
+              ordner: bild.ordner || "",
+              promptId: event.prompt_id,
+            }));
+          // Neueste zuerst; ältere fallen hinten raus
+          this.history = [...entries, ...this.history].slice(0, HISTORY_MAX);
+          stage.promptId = event.prompt_id;
+          if (entries.length) {
+            this.showImage(entries[0]);
+          } else {
+            // Auftrag ohne Bild: ein altes Bild bleibt stehen, sonst leere Bühne
+            stage.phase = stage.image ? "fertig" : "leer";
+          }
+          break;
+        }
+        case "fehler":
+          stage.phase = "fehler";
+          stage.promptId = event.prompt_id;
+          stage.error = event.meldung || "Unbekannter Fehler";
+          break;
+      }
+    },
+
+    // Adresse eines fertigen Bildes – die einzige Stelle, die sie baut.
+    imageUrl(bild) {
+      return (
+        "/api/bild?ordner=" + encodeURIComponent(bild.ordner || "") +
+        "&datei=" + encodeURIComponent(bild.datei)
+      );
+    },
+
+    // Holt ein Bild aus dem Verlauf auf die Bühne.
+    showImage(entry) {
+      this.stage.image = entry;
+      this.stage.phase = "fertig";
+      this.stage.error = "";
+    },
+
+    // Läuft gerade ein Auftrag (wartend, ladend oder rechnend)?
+    get isRunning() {
+      return ["wartet", "laedt", "rechnet"].includes(this.stage.phase);
+    },
+
+    // Anteil des Fortschritts von 0 bis 1; null = unbestimmt (wartet, lädt).
+    get progress() {
+      const { phase, step, steps } = this.stage;
+      if (phase !== "rechnet" || !(steps > 0)) return null;
+      return Math.min(1, Math.max(0, step / steps));
+    },
+
+    // Zeilen { k, v } der Info-Karte zum Bild auf der Bühne.
+    // Fehlen Angaben zum Auftrag (fremder Tab), steht dort nur die Datei.
+    get stageInfo() {
+      const image = this.stage.image;
+      if (!image) return [];
+      const job = this.jobs[image.promptId];
+      const rows = job
+        ? [
+            { k: "Seed", v: job.seed },
+            { k: "Auflösung", v: `${job.width} × ${job.height}` },
+            { k: "Format", v: job.format },
+            // Mehrere LoRAs untereinander (Zeilenumbruch, im CSS pre-line)
+            { k: "LoRAs", v: job.loras.length ? job.loras.join("\n") : "keine" },
+          ]
+        : [];
+      rows.push({ k: "Datei", v: image.datei });
+      return rows;
+    },
+
+    // Statuszeile der Bühne.
+    get stageText() {
+      switch (this.stage.phase) {
+        case "wartet":
+          return this.queueCount > 1
+            ? `In der Warteschlange · noch ${this.queueCount - 1} vor dir`
+            : "In der Warteschlange";
+        case "laedt":
+          return "Modell wird geladen …";
+        case "rechnet":
+          return `Schritt ${this.stage.step} / ${this.stage.steps}`;
+        case "fertig":
+          return "Fertig";
+        case "fehler":
+          return this.stage.error;
+        default:
+          return "";
       }
     },
 

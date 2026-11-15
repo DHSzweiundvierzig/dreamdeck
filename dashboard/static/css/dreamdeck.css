@@ -26,6 +26,9 @@
   /* Warnfarbe (sehr große Bilder) und Fläche aktiver Auswahl-Knöpfe */
   --dd-warn: #FFC46B;
   --dd-cyan-bg: #0E2226;
+  /* Bühne: dunkleres Cyan für die Balken-Streifen, Magenta-Leuchten ums Bild */
+  --dd-cyan-deep: #0B7F88;
+  --dd-magenta-glow: rgba(255, 61, 200, .18);
 
   --dd-head: 'Space Grotesk', system-ui, sans-serif;
   --dd-body: Inter, system-ui, sans-serif;
@@ -681,14 +684,96 @@ button, textarea, input, select { font: inherit; color: inherit; }
   min-width: 0;
   min-height: 480px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 16px;
+  padding: 20px;
   background: var(--dd-well);
   border: 1px solid var(--dd-line);
   border-radius: 14px;
   color: var(--dd-muted);
 }
 .dd-stage p { margin: 0; }
+
+/* Statuszeile über dem Balken; bei Fehler in Fehlerfarbe */
+.dd-stage__status {
+  font-family: var(--dd-mono);
+  font-size: 13px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.dd-stage__status.is-err { color: var(--dd-err); }
+
+/* Fortschrittsbalken: Füllung aus wandernden Streifen */
+.dd-progress {
+  width: 100%;
+  max-width: 480px;
+  height: 10px;
+  background: var(--dd-line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.dd-progress__fill {
+  height: 100%;
+  background-image: linear-gradient(
+    135deg,
+    var(--dd-cyan) 25%, var(--dd-cyan-deep) 25%,
+    var(--dd-cyan-deep) 50%, var(--dd-cyan) 50%,
+    var(--dd-cyan) 75%, var(--dd-cyan-deep) 75%
+  );
+  background-size: 20px 20px;
+  transition: width .3s ease;
+  animation: dd-stripes 1s linear infinite;
+}
+/* Unbestimmt (wartet, lädt): volle Breite, gedämpft */
+.dd-progress__fill.is-indeterminate { opacity: .5; }
+
+@keyframes dd-stripes {
+  from { background-position: 0 0; }
+  to   { background-position: 20px 0; }
+}
+
+/* Fertiges Bild links, Info-Spalte rechts */
+.dd-stage__result {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+.dd-stage__picture { flex: 0 1 auto; min-width: 0; }
+.dd-stage__image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 600px;
+  object-fit: contain;
+  box-shadow: 0 0 0 1px var(--dd-line2), 0 0 48px var(--dd-magenta-glow);
+}
+.dd-stage__side {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Info-Karte: Paneel mit der Zusammenfassungs-Liste; mehrere LoRAs untereinander */
+.dd-info {
+  padding: 12px;
+  color: var(--dd-text);
+}
+.dd-info dd { white-space: pre-line; }
+
+/* Knöpfe unter der Info-Karte im 2×2-Raster (Höhe 44px kommt von .dd-btn) */
+.dd-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
 
 .dd-history {
   flex: 0 0 132px;
@@ -699,8 +784,41 @@ button, textarea, input, select { font: inherit; color: inherit; }
   padding: 14px 0;
 }
 .dd-history__empty {
+  flex: none;
   width: 96px;
   height: 168px;
+}
+
+/* Verlauf: senkrecht scrollbar; Innenabstand lässt Platz für den Fokusrahmen */
+.dd-history__list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-height: 600px;
+  padding: 4px 6px;
+  overflow-y: auto;
+}
+
+/* Vorschau-Kachel im Verlauf; das Bild auf der Bühne mit Cyan-Rahmen */
+.dd-thumb {
+  flex: none;
+  width: 96px;
+  height: 168px;
+  padding: 0;
+  background: var(--dd-well);
+  border: 1px solid var(--dd-line2);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.dd-thumb:hover { border-color: var(--dd-muted); }
+.dd-thumb.is-current { border-color: var(--dd-cyan); }
+.dd-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .dd-history__link {
   font-size: 12px;
@@ -711,6 +829,9 @@ button, textarea, input, select { font: inherit; color: inherit; }
 @media (max-width: 900px) {
   .dd-lower { flex-direction: column; }
   .dd-history { flex: 0 0 auto; }
+  /* Bild über der Info-Spalte */
+  .dd-stage__result { flex-direction: column; align-items: center; }
+  .dd-stage__side { flex: 0 0 auto; width: 100%; max-width: 480px; }
 }
 
 /* ---------- Weniger Bewegung ---------- */

@@ -39,7 +39,7 @@
   - [x] 2f Oberflächen-Gerüst nach Variante B, Alpine.js fest im Repo und gepinnt – Browser-Kontrolle bestanden am 15.11.2026
   - [x] 2g Prompt-Leiste: Prompt, Format-Presets, Seed, Batch-Anzahl – Browser-Kontrolle bestanden am 15.11.2026 (inkl. Seed 2^64 − 1)
   - [x] 2h LoRA-Auswahl (bis 6 gleichzeitig, mit Stärke-Regler) – Browser-Kontrolle bestanden am 15.11.2026 (PsyDreamer-Bild per Dashboard)
-  - [ ] 2i Backend für die Bühne: GET /api/bild, EventHub merkt letzten Stand (verbindung, warteschlange)
+  - [x] 2i Backend für die Bühne: GET /api/bild, EventHub merkt letzten Stand (verbindung, warteschlange) – Pod-Test bestanden am 15.11.2026 (Hub sofort mit Stand, /api/bild 200/404/404)
   - [ ] 2l Bühne in der Oberfläche: „Modell wird geladen“, Fortschrittsbalken, Bild mit Info-Karte, Verlauf der Sitzung
   - [ ] 2j Passwortschutz (DASHBOARD_PASSWORD), Erreichbarkeit (RunPod-Proxy oder SSH-Tunnel), RunPod-Dienste – ggf. neue Vorlage
   - [ ] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen und Vorlage wieder mit DREAMDECK_BRANCH=main anlegen
