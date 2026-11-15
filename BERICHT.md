@@ -1,22 +1,31 @@
-# Bericht – Etappe 2 · Schritt 2e, Nachbesserung (Dateiname nach Ablage-Regel)
+# Bericht – Etappe 2 · Schritt 2f (Oberflächen-Gerüst nach Variante B)
+
+## Neue Dateien
+- `dashboard/static/vendor/alpine-3.17.5.min.js`: Alpine.js 3.17.5 fest im Repo (55 935 Bytes, per curl von jsDelivr geladen).
+- `dashboard/static/css/dreamdeck.css`: Tokens auf `:root`, Layout für Kopfzeile, Pipeline-Boxen, Prompt-Leiste, Bühne und Verlauf; ein `@keyframes dd-flicker`, Zustände nur über die Klassen `is-open` und `dd-status--…`.
+- `dashboard/static/js/app.js`: klassisches Script, registriert bei `alpine:init` die Komponente `dreamdeck` (`open`, `toggle`, `isOpen`, `steps`, `comfy`) und fragt `/api/health` sofort und danach alle 30 s ab – mit dem einzigen `setInterval` der Oberfläche.
 
 ## Geänderte Dateien
-- `dashboard/workflow.py`: `make_filename_prefix` liefert jetzt `%Y-%m/%Y-%m-%d_%H%M%S` (ergibt z. B. `2026-11/2026-11-15_170616_00001_.png`); Docstring verweist auf die Ablage-Regel in NOTIZEN.md (14.11.2026).
-- `MERKLISTE.md`: 2e mit `[x]` abgehakt (Pod-Test vom 15.11.2026 bestanden: start, fortschritt 1–20, fertig mit Bild, warteschlange).
+- `dashboard/static/index.html`: Platzhalterseite komplett ersetzt durch das Gerüst (header, nav, drei sections, aside); die fünf Boxen entstehen per `x-for` aus `steps` und einer Vorlage.
+- `ARCHITEKTUR.md`: Punkt „Oberfläche“ auf „(Gerüst umgesetzt)“ gestellt und um Ablageort und Alpine-Version ergänzt.
+- `NOTIZEN.md`: Unterpunkt zu den Box-Codes und zum späteren Klick-Tutorial beim Eintrag „Oberfläche nach Entwurf Variante B“ ergänzt.
+- `MERKLISTE.md`: drei neue Punkte unter „Etappe 2 – Ausbau“ angehängt; 2f bleibt offen bis zur Browser-Kontrolle.
+- `BERICHT.md`: dieser Bericht.
 
-## Suche nach altem Präfix-Format (Schritt 2)
-Die Suche lief per `grep` über Bash, da das Grep-Werkzeug in dieser Sitzung nicht verfügbar war (nur lesend).
+## Prüfsumme
+- sha256 von `alpine-3.17.5.min.js`: `b4036e9e9ac22fa6f6ae1ba292e015e1f3e9c85d0d79e73e4c8eb9bb139b522e` – stimmt mit dem erwarteten Wert überein.
 
-```
-$ grep -rn "make_filename_prefix\|dreamdeck_" dashboard/ ARCHITEKTUR.md MERKLISTE.md
-dashboard/workflow.py:47:def make_filename_prefix() -> str:
-dashboard/workflow.py:50:    Beispiel: ``2026-11/dreamdeck_20261115-153000``. Monat und Zeitstempel
-dashboard/workflow.py:55:    return now.strftime("%Y-%m/dreamdeck_%Y%m%d-%H%M%S")
-```
+## Geprüft
+- `node --check dashboard/static/js/app.js`: Syntax in Ordnung.
+- Genau ein `setInterval` in `app.js`, genau ein `@keyframes` in der CSS, feste Farbwerte nur im `:root`-Block.
+- `vendor/` wird von `.gitignore` nicht erfasst.
+- **Nicht geprüft:** die Seite im Browser. Auf der devbox gibt es kein Python, das Dashboard ließ sich hier nicht starten. Optik, Auf-/Zuklappen, Flackern und Statuspunkt sind also noch ungesehen.
 
-- Nur `dashboard/workflow.py` beschrieb das alte Format; beide Stellen sind angepasst.
-- `ARCHITEKTUR.md` und `MERKLISTE.md` enthalten kein `dreamdeck_`-Präfix; die MERKLISTE-Zeile zu 2d nennt Monatsordner und Zeitstempel nur allgemein, sie bleibt unverändert.
-- `dashboard/workflows/flux_split.json` (Feld `filename_prefix: "dreamdeck"`) unverändert, wie vorgegeben.
-
-## Prüfung
-- Nichts ausgeführt: In dieser Umgebung gibt es kein Python. Änderung nur per Lesen geprüft; der Test am Pod ist maßgeblich.
+## Auffälligkeiten
+- **Zwei Zusatz-Tokens:** `--dd-on-cyan` (#04161A, Schrift auf dem Generieren-Knopf) und `--dd-cyan-glow` (rgba(34,228,240,.35), Leuchten). Beide Werte standen im Auftrag als feste Farben; als Tokens bleibt die Regel „Farben nur über Tokens“ gewahrt.
+- **„Weiß“ beim aktiven Menüpunkt** ist `--dd-text` (#ECECF2), kein reines Weiß – aus demselben Grund.
+- **Widerspruch in der Doku:** ARCHITEKTUR.md und NOTIZEN.md nennen weiterhin „ES-Module statt globaler Variablen“, `app.js` ist laut Auftrag aber ein klassisches Script. Nicht geändert, weil nicht beauftragt – sollte in einem der nächsten Schritte angeglichen werden.
+- **Geschlossene Boxen neben einer offenen** strecken sich auf deren Höhe (mind. 320px), damit die Reihe einheitlich bleibt; sind alle zu, ist die Reihe niedrig. Sollen geschlossene Boxen auch dann niedrig bleiben, genügt `align-items: flex-start` an `.dd-pipeline`.
+- **`x-cloak` am body:** Lädt Alpine nicht, bleibt die Seite leer (so beauftragt).
+- **Ausgegraute Links** (Navigation, „Zur Galerie“) sind `<a>` ohne `href` mit `aria-disabled="true"` – nicht anklickbar und nicht per Tab erreichbar.
+- Nichts committet.

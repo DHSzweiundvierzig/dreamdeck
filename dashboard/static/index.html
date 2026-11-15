@@ -4,10 +4,104 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DreamDeck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/dreamdeck.css">
+  <!-- Reihenfolge wichtig: app.js vor Alpine -->
+  <script defer src="js/app.js"></script>
+  <script defer src="vendor/alpine-3.17.5.min.js"></script>
 </head>
-<body>
-  <h1>DreamDeck</h1>
-  <p>Gerüst läuft – Oberfläche folgt in 2f.</p>
-  <p><a href="/api/health">/api/health</a></p>
+<body x-data="dreamdeck" x-cloak>
+
+  <header class="dd-header">
+    <div class="dd-brand">
+      <svg class="dd-logo" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+        <circle class="dd-logo__cyan" cx="15" cy="15" r="13"/>
+        <polygon class="dd-logo__magenta" points="15,5 23.7,20 6.3,20"/>
+        <polygon class="dd-logo__cyan" points="15,25 6.3,10 23.7,10"/>
+      </svg>
+      <span>Dream<span class="dd-brand__accent">Deck</span></span>
+    </div>
+
+    <nav class="dd-nav" aria-label="Hauptnavigation">
+      <a class="dd-nav__item" href="/" aria-current="page">Generieren</a>
+      <a class="dd-nav__item" role="link" aria-disabled="true" title="folgt später">Galerie</a>
+      <a class="dd-nav__item" role="link" aria-disabled="true" title="folgt später">Prompt-Werkstatt</a>
+      <a class="dd-nav__item" role="link" aria-disabled="true" title="folgt später">Rezepte</a>
+      <a class="dd-nav__item" role="link" aria-disabled="true" title="folgt später">Einstellungen</a>
+    </nav>
+
+    <div class="dd-status" :class="'dd-status--' + comfy">
+      <span class="dd-status__dot" aria-hidden="true"></span>
+      <span aria-live="polite" x-text="comfyLabel"></span>
+    </div>
+  </header>
+
+  <main class="dd-main">
+
+    <section class="dd-pipeline" aria-label="Pipeline">
+      <template x-for="step in steps" :key="step.n">
+        <article class="dd-box" :class="{ 'is-open': isOpen(step.n) }">
+          <svg class="dd-box__corner" viewBox="0 0 20 20" aria-hidden="true">
+            <line x1="0" y1="0" x2="20" y2="20"/>
+          </svg>
+
+          <div class="dd-box__head">
+            <div class="dd-box__titles">
+              <p class="dd-box__code" x-text="step.code"></p>
+              <h2 class="dd-label" x-text="step.title"></h2>
+              <p class="dd-box__hint" x-text="step.hint"></p>
+            </div>
+            <div class="dd-box__actions">
+              <button type="button" class="dd-iconbtn"
+                      @click="toggle(step.n)"
+                      :aria-expanded="isOpen(step.n).toString()"
+                      :aria-controls="'dd-box-body-' + step.n"
+                      :aria-label="step.title + (isOpen(step.n) ? ' zuklappen' : ' aufklappen')">
+                <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                  <polyline points="2,4 6,8 10,4"/>
+                </svg>
+              </button>
+              <button type="button" class="dd-iconbtn"
+                      title="Erklärung folgt"
+                      :aria-label="'Erklärung zu ' + step.title">i</button>
+            </div>
+          </div>
+
+          <div class="dd-box__body" :id="'dd-box-body-' + step.n">
+            <div class="dd-placeholder" x-text="step.later"></div>
+          </div>
+
+          <svg class="dd-box__stripes" viewBox="0 0 34 8" aria-hidden="true">
+            <polygon points="6,0 18,0 12,8 0,8"/>
+            <polygon points="22,0 34,0 28,8 16,8"/>
+          </svg>
+        </article>
+      </template>
+    </section>
+
+    <section class="dd-panel dd-prompt" aria-label="Prompt">
+      <label class="dd-label" for="dd-prompt-input">Dein Prompt</label>
+      <div class="dd-prompt__row">
+        <textarea class="dd-prompt__input" id="dd-prompt-input" rows="3"></textarea>
+        <button type="button" class="dd-generate" disabled title="folgt in 2g">Generieren</button>
+      </div>
+    </section>
+
+    <div class="dd-lower">
+      <section class="dd-stage" aria-label="Bühne">
+        <p>Hier erscheint dein Bild</p>
+      </section>
+
+      <aside class="dd-panel dd-history" aria-label="Verlauf">
+        <h2 class="dd-label dd-label--muted">Verlauf</h2>
+        <div class="dd-placeholder dd-history__empty">noch keine Bilder</div>
+        <a class="dd-history__link" role="link" aria-disabled="true" title="folgt später">Zur Galerie</a>
+      </aside>
+    </div>
+
+  </main>
+
 </body>
 </html>

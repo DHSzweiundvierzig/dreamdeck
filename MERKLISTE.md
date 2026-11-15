@@ -50,6 +50,9 @@
 - [ ] Einstellungsseite: Modell-Sets mit Status und Nachladen, evtl. Set tauschen
 - [ ] Modell-Dropdown nach Ladeart (checkpoint/split)
 - [ ] LoRA per Civitai-Link oder Versionsnummer nachladen (nutzt civitai_lora/download_file)
+- [ ] Klick-Tutorial mit An/Aus-Schalter: Erklär-Boxen an jedem Menü/Dropdown, Schritt für Schritt
+- [ ] GPU-Name in der Kopfzeile (aus ComfyUI /system_stats über /api/health durchreichen)
+- [ ] Anzeige „Drive-Sync aktiv“ in der Kopfzeile – Datenquelle klären
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten

@@ -1,0 +1,392 @@
+/* DreamDeck – Oberfläche nach Entwurf „Variante B“.
+   Farben ausschließlich über die Tokens auf :root. */
+
+:root {
+  --dd-bg: #07070B;
+  --dd-bar: #0B0B11;
+  --dd-panel: #101017;
+  --dd-well: #0A0A10;
+  --dd-field: #07070B;
+  --dd-chip: #16161F;
+  --dd-line: #22222E;
+  --dd-line2: #2A2A38;
+  --dd-dash: #33334A;
+  --dd-text: #ECECF2;
+  --dd-muted: #A6A6BC;
+  --dd-dim: #8A8AA3;
+  --dd-cyan: #22E4F0;
+  --dd-magenta: #FF3DC8;
+  --dd-cyan-text: #7FF3FA;
+  --dd-magenta-text: #FFB8EC;
+  --dd-ok: #3DDC84;
+  --dd-err: #FF5470;
+  /* Zusatz-Tokens: Schrift auf Cyan-Fläche und Leuchten in Cyan */
+  --dd-on-cyan: #04161A;
+  --dd-cyan-glow: rgba(34, 228, 240, .35);
+
+  --dd-head: 'Space Grotesk', system-ui, sans-serif;
+  --dd-body: Inter, system-ui, sans-serif;
+  --dd-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ---------- Grundlagen ---------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+[x-cloak] { display: none !important; }
+
+html { height: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  background: var(--dd-bg);
+  color: var(--dd-text);
+  font: 14px/1.45 var(--dd-body);
+}
+
+button, textarea { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--dd-cyan);
+  outline-offset: 2px;
+}
+
+.dd-panel {
+  background: var(--dd-panel);
+  border: 1px solid var(--dd-line);
+  border-radius: 14px;
+}
+
+/* Gemeinsame Beschriftung: Box-Titel, „Dein Prompt“, „Verlauf“ */
+.dd-label {
+  margin: 0;
+  font: 700 13px/1.3 var(--dd-head);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.dd-label--muted { color: var(--dd-muted); }
+
+/* Gemeinsamer gestrichelter Platzhalter: Box-Inhalt und Verlauf */
+.dd-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px dashed var(--dd-dash);
+  border-radius: 10px;
+  color: var(--dd-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ---------- Kopfzeile ---------- */
+
+.dd-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 12px 28px;
+  background: var(--dd-bar);
+  border-bottom: 1px solid var(--dd-line);
+}
+
+.dd-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 22px/1 var(--dd-head);
+}
+.dd-brand__accent { color: var(--dd-cyan); }
+
+.dd-logo { display: block; fill: none; stroke-width: 1.5; }
+.dd-logo__cyan { stroke: var(--dd-cyan); }
+.dd-logo__magenta { stroke: var(--dd-magenta); }
+
+.dd-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dd-nav__item {
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--dd-muted);
+  font-weight: 500;
+  text-decoration: none;
+}
+.dd-nav__item[aria-current="page"] {
+  background: var(--dd-chip);
+  border-color: var(--dd-line2);
+  color: var(--dd-text);
+}
+.dd-nav__item[aria-disabled="true"] { cursor: not-allowed; }
+
+/* Statuspunkt für ComfyUI */
+.dd-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dd-muted);
+  font-size: 12px;
+}
+.dd-status__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dd-dim);
+}
+.dd-status--ok .dd-status__dot { background: var(--dd-ok); }
+.dd-status--aus .dd-status__dot { background: var(--dd-err); }
+
+/* ---------- Seitenaufbau ---------- */
+
+.dd-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px 28px 28px;
+}
+
+/* ---------- Pipeline ---------- */
+
+.dd-pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dd-box {
+  --dd-box-line: var(--dd-line);
+  position: relative;
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px 16px;
+  background: var(--dd-panel);
+  border: 1px solid var(--dd-box-line);
+  border-radius: 14px;
+  /* Ecke oben rechts 20px abgeschrägt */
+  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+  transition: flex-grow .35s, border-color .35s;
+}
+.dd-box.is-open {
+  --dd-box-line: var(--dd-cyan);
+  flex: 4 1 520px;
+  min-height: 320px;
+}
+
+/* Diagonallinie an der abgeschrägten Ecke, in Rahmenfarbe */
+.dd-box__corner {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 20px;
+  height: 20px;
+  stroke: var(--dd-box-line);
+  stroke-width: 2;
+  transition: stroke .35s;
+  pointer-events: none;
+}
+
+/* Zwei schräge Deko-Streifen unten rechts */
+.dd-box__stripes {
+  position: absolute;
+  right: 12px;
+  bottom: 9px;
+  width: 34px;
+  height: 8px;
+  fill: var(--dd-line2);
+  pointer-events: none;
+}
+.dd-box.is-open .dd-box__stripes {
+  fill: var(--dd-cyan);
+  filter: drop-shadow(0 0 4px var(--dd-cyan-glow));
+}
+
+.dd-box__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dd-box__titles { min-width: 0; }
+
+.dd-box__code {
+  margin: 0 0 6px;
+  font: 500 16px/1.2 var(--dd-mono);
+  letter-spacing: 2px;
+  white-space: nowrap;
+  color: var(--dd-dim);
+}
+.dd-box.is-open .dd-box__code {
+  color: var(--dd-cyan-text);
+  text-shadow: 0 0 10px var(--dd-cyan-glow);
+}
+
+.dd-box__hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--dd-muted);
+}
+
+/* Platz lassen für die abgeschrägte Ecke */
+.dd-box__actions {
+  display: flex;
+  gap: 4px;
+  margin-right: 8px;
+}
+
+.dd-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: var(--dd-chip);
+  border: 1px solid var(--dd-line2);
+  border-radius: 8px;
+  color: var(--dd-muted);
+  font: 500 12px/1 var(--dd-mono);
+  cursor: pointer;
+}
+.dd-iconbtn:hover { color: var(--dd-text); }
+.dd-iconbtn svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  transition: transform .35s;
+}
+.dd-box.is-open .dd-iconbtn svg { transform: rotate(180deg); }
+
+/* Inhalt nur in der offenen Box */
+.dd-box__body { display: none; }
+.dd-box.is-open .dd-box__body {
+  display: flex;
+  flex: 1;
+  margin-bottom: 12px;
+}
+.dd-box__body .dd-placeholder { flex: 1; }
+
+/* Einmaliges Flackern beim Aufklappen */
+@keyframes dd-flicker {
+  0%   { opacity: 1; }
+  10%  { opacity: .2; }
+  20%  { opacity: 1; }
+  35%  { opacity: .4; }
+  45%  { opacity: 1; }
+  60%  { opacity: .15; }
+  70%  { opacity: .9; }
+  85%  { opacity: .6; }
+  100% { opacity: 1; }
+}
+.dd-box.is-open .dd-box__code,
+.dd-box.is-open .dd-box__stripes {
+  animation: dd-flicker .6s linear 1;
+}
+
+/* ---------- Prompt-Leiste ---------- */
+
+.dd-prompt { padding: 16px; }
+.dd-prompt .dd-label { display: block; margin-bottom: 10px; }
+
+.dd-prompt__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dd-prompt__input {
+  flex: 4 1 420px;
+  min-width: 0;
+  padding: 10px 12px;
+  background: var(--dd-field);
+  border: 1px solid var(--dd-line2);
+  border-radius: 10px;
+  resize: vertical;
+}
+.dd-prompt__input::placeholder { color: var(--dd-dim); }
+
+.dd-generate {
+  flex: 1 1 200px;
+  min-height: 64px;
+  background: var(--dd-cyan);
+  border: 0;
+  border-radius: 10px;
+  color: var(--dd-on-cyan);
+  font: 700 20px/1 var(--dd-head);
+  box-shadow: 0 0 24px var(--dd-cyan-glow);
+  cursor: pointer;
+}
+.dd-generate:disabled {
+  opacity: .4;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ---------- Bühne und Verlauf ---------- */
+
+.dd-lower {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+}
+
+.dd-stage {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dd-well);
+  border: 1px solid var(--dd-line);
+  border-radius: 14px;
+  color: var(--dd-muted);
+}
+.dd-stage p { margin: 0; }
+
+.dd-history {
+  flex: 0 0 132px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+}
+.dd-history__empty {
+  width: 96px;
+  height: 168px;
+}
+.dd-history__link {
+  font-size: 12px;
+  color: var(--dd-muted);
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .dd-lower { flex-direction: column; }
+  .dd-history { flex: 0 0 auto; }
+}
+
+/* ---------- Weniger Bewegung ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

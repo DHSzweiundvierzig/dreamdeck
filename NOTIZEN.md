@@ -28,6 +28,7 @@
 - **Formate als Presets um ca. 1 MP, Auflösung immer durch 16 teilbar, über 2 MP Warnung** – passt zu den Modellen, vermeidet Fehler und Speicherprobleme.
 - **Bis zu 6 LoRAs gleichzeitig** – genug Spielraum für Kombinationen, ohne die Oberfläche zu überladen.
 - **Oberfläche nach Entwurf „Variante B“** – Pipeline-Boxen 1–5 oben, Prompt-Leiste, Bühne mit Verlauf rechts, Einstellungsseite.
+  - Pipeline-Boxen tragen statt Nummern einen Code im Cyberpunk-Stil (DD//01·MDL …). Beim Start sind alle Boxen zu – später erklärt ein abschaltbares Klick-Tutorial die Bedienung Schritt für Schritt.
 - **Bezeichner im Code auf Englisch, Doku und Kommentare auf Deutsch** – vorläufig, solange nichts anderes kommt.
 - **ngrok aus der 1.0 wird nicht mehr genutzt** – Authtoken am 11.11.2026 rotiert.
 - **14.11.2026 – Claude Code läuft mit dem Firmenkonto** – bewusste Entscheidung, so gewünscht.
