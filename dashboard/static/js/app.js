@@ -27,6 +27,10 @@ document.addEventListener("alpine:init", () => {
     return Math.min(DIM_MAX, Math.max(DIM_MIN, rounded));
   }
 
+  // Höchstzahl gleichzeitiger LoRAs und Stärke einer neu hinzugefügten LoRA
+  const LORA_MAX = 6;
+  const LORA_STRENGTH_DEFAULT = 0.8;
+
   Alpine.data("dreamdeck", () => ({
     // Nummer der offenen Box, 0 = alle zu.
     // Später übernimmt ein Klick-Tutorial das Aufklappen.
@@ -35,7 +39,7 @@ document.addEventListener("alpine:init", () => {
     // Die fünf Pipeline-Boxen; alle entstehen aus dieser Liste und einer Vorlage.
     steps: [
       { n: 1, code: "DD//01·MDL", title: "Modelle", hint: "FLUX.1 [dev]", later: "Auswahl folgt später" },
-      { n: 2, code: "DD//02·LRA", title: "LoRAs", hint: "bis zu 6 gleichzeitig", later: "folgt in 2h" },
+      { n: 2, code: "DD//02·LRA", title: "LoRAs" },
       { n: 3, code: "DD//03·FMT", title: "Format" },
       { n: 4, code: "DD//04·TUN", title: "Feintuning", hint: "25 Schritte · Guidance 3.5", later: "folgt später" },
       { n: 5, code: "DD//05·OUT", title: "Speichern", hint: "Monatsordner · Drive", later: "folgt später" },
@@ -77,6 +81,16 @@ document.addEventListener("alpine:init", () => {
     // Anzahl Bilder je Auftrag
     batch: 1,
 
+    // LoRA-Dateien auf dem Pod (Namen wie von ComfyUI geliefert) und Ladezustand:
+    // "neu" | "laedt" | "ok" | "fehler"
+    loraFiles: [],
+    loraState: "neu",
+    // Gewählte LoRAs als { id, name, strength, on }; nextLoraId vergibt die ids
+    loras: [],
+    nextLoraId: 1,
+    // Auswahl-Liste unter „+ LoRA“ offen
+    pickerOpen: false,
+
     // Absenden läuft gerade; Meldung unter dem Knopf mit Art "ok" | "err"
     busy: false,
     message: "",
@@ -89,8 +103,10 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Klick auf die offene Box schließt sie wieder.
+    // Box 2 lädt beim Öffnen die LoRA-Liste, solange sie noch nicht da ist.
     toggle(n) {
       this.open = this.open === n ? 0 : n;
+      if (this.open === 2 && this.loraState !== "ok") this.loadLoras();
     },
 
     isOpen(n) {
@@ -144,7 +160,11 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Kurzhinweis im Box-Kopf; bei Box 3 live aus dem aktiven Format.
+    // Box 2 zählt die gewählten und die eingeschalteten LoRAs.
     hintFor(step) {
+      if (step.n === 2) {
+        return `${this.loras.length} von ${LORA_MAX} · ${this.activeLoras.length} aktiv`;
+      }
       if (step.n !== 3) return step.hint;
       const active = this.formats.find((f) => f.key === this.format);
       return `${this.formatLabel(active)} · ${this.width} × ${this.height}`;
@@ -181,15 +201,82 @@ document.addEventListener("alpine:init", () => {
       input.value = this.custom[side];
     },
 
+    // Holt die LoRA-Dateien vom Backend – die einzige Stelle, die die Liste lädt.
+    async loadLoras() {
+      if (this.loraState === "laedt") return;
+      this.loraState = "laedt";
+      try {
+        const response = await fetch("/api/loras", { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data.loras)) throw new Error("keine Liste");
+        this.loraFiles = data.loras;
+        this.loraState = "ok";
+      } catch (error) {
+        this.loraState = "fehler";
+      }
+    },
+
+    // Anzeigename einer LoRA: ohne Ordnerpfad und ohne „.safetensors“.
+    loraLabel(name) {
+      return name.split(/[\\/]/).pop().replace(/\.safetensors$/i, "");
+    },
+
+    // Dateien, die noch nicht gewählt sind – nur sie bietet die Auswahl an,
+    // deshalb kann keine Datei doppelt in loras landen.
+    get freeLoraFiles() {
+      const used = this.loras.map((lora) => lora.name);
+      return this.loraFiles.filter((name) => !used.includes(name));
+    },
+
+    // „+ LoRA“ ist nur bedienbar, solange Platz ist und freie Dateien da sind.
+    get canAddLora() {
+      return this.loras.length < LORA_MAX && this.freeLoraFiles.length > 0;
+    },
+
+    // Eingeschaltete LoRAs; nur sie gehen in Auftrag und Zusammenfassung.
+    get activeLoras() {
+      return this.loras.filter((lora) => lora.on);
+    },
+
+    addLora(name) {
+      if (this.loras.length >= LORA_MAX || !this.freeLoraFiles.includes(name)) return;
+      this.loras.push({ id: this.nextLoraId++, name, strength: LORA_STRENGTH_DEFAULT, on: true });
+      this.pickerOpen = false;
+    },
+
+    removeLora(id) {
+      this.loras = this.loras.filter((lora) => lora.id !== id);
+    },
+
+    toggleLora(id) {
+      const lora = this.loras.find((entry) => entry.id === id);
+      if (lora) lora.on = !lora.on;
+    },
+
+    // Übernimmt die Stärke beim Verlassen des Zahlenfeldes: −2 bis 2,
+    // auf 0.05 gerundet, ungültig → 0.8.
+    setStrength(lora, input) {
+      const value = parseFloat(input.value);
+      lora.strength = Number.isFinite(value)
+        ? Math.round(Math.min(2, Math.max(-2, value)) * 20) / 20
+        : LORA_STRENGTH_DEFAULT;
+      input.value = lora.strength;
+    },
+
     // Zusammenfassung einer Box als Liste { k, v } für die geschlossene Ansicht.
-    // Die festen Werte von 1, 2, 4 und 5 entsprechen den heutigen Backend-Standards
+    // Die festen Werte von 1, 4 und 5 entsprechen den heutigen Backend-Standards
     // und werden in späteren Schritten live.
     summary(n) {
       switch (n) {
         case 1:
           return [{ k: "Modell", v: "FLUX.1 [dev]" }];
         case 2:
-          return [{ k: "LoRAs", v: "keine" }];
+          if (!this.activeLoras.length) return [{ k: "LoRAs", v: "keine" }];
+          // Number(): während des Tippens kann das Zahlenfeld kurz leer sein
+          return this.activeLoras.map((lora) => ({
+            k: this.loraLabel(lora.name),
+            v: (Number(lora.strength) || 0).toFixed(2).replace(".", ","),
+          }));
         case 3:
           return [
             { k: "Format", v: this.formatLabel(this.formats.find((f) => f.key === this.format)) },
@@ -239,6 +326,7 @@ document.addEventListener("alpine:init", () => {
             width: this.width,
             height: this.height,
             batch_size: this.batch,
+            loras: this.activeLoras.map((lora) => ({ name: lora.name, strength: lora.strength })),
           }),
         });
         // Antwort ohne JSON (z. B. Serverfehler) wie eine leere Antwort behandeln

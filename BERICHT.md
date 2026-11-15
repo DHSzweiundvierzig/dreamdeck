@@ -1,24 +1,34 @@
-# Bericht · Etappe 2 · Schritt 2g (Korrektur)
+# BERICHT – Etappe 2 · Schritt 2h: LoRA-Auswahl in Box 2
+
+Stand: 15.11.2026 · Branch `etappe-2` · nicht committet · 2h in der Merkliste noch offen (Browser-Kontrolle steht aus)
 
 ## Änderungen je Datei
-- `dashboard/app.py`: `GenerateIn.seed` erlaubt jetzt 0 bis 2^64 − 1 (Kommentar ergänzt), `generate` liefert den Seed als Text.
-- `dashboard/static/js/app.js`: `SEED_MAX` als Text, Seed wird per BigInt geprüft und als Text geschickt; `landscape` ist ein Objekt je Format; `baseDims`/`formatLabel` drehen je Format; `rotate(f)` wählt aus und dreht; neu `hintFor(step)` und `setBatch(input)`; festes Hint von Box 3 entfernt.
-- `dashboard/static/index.html`: Box-Kopf nutzt `hintFor(step)`; jeder Format-Knopf steckt in einem Wrapper mit eigenem Dreh-Knopf daneben (nicht verschachtelt, bei 1:1 ausgeblendet); Formvorschau im festen `dd-shape-slot`; Anzahl-Feld mit `@change="setBatch($event.target)"`; einzelner Drehen-Knopf entfernt.
-- `dashboard/static/css/dreamdeck.css`: Format-Knopf fest 64 × 68 px (Inhalt oben, „Eigenes“ per `min-width` breiter), `.dd-shape-slot` 28 × 28 px, Dreh-Knopf `.dd-rotate` 22 × 22 px in der Ecke (top/right −6px); `dd-iconbtn--large` entfernt (vorher gegrept, nirgends mehr genutzt).
-- `NOTIZEN.md`: Eintrag zu Seeds bis 2^64 − 1 und Ausrichtung je Format ergänzt.
-- `MERKLISTE.md`: unverändert, 2g bleibt offen bis zur Browser-Kontrolle.
+- `dashboard/app.py`: neuer Endpunkt `GET /api/loras` vor dem Static-Mount; liefert `{"loras": [...]}` sortiert aus ComfyUI `/models/loras`, bei Verbindungsfehler, Status ≠ 200 oder keiner Liste 503 mit `{"fehler": "ComfyUI nicht erreichbar"}`.
+- `dashboard/static/js/app.js`: Konstante `LORA_MAX`, Zustände `loraFiles`, `loraState`, `loras`, `nextLoraId`, `pickerOpen`; Methoden `loadLoras`, `loraLabel`, `freeLoraFiles`, `canAddLora`, `activeLoras`, `addLora`, `removeLora`, `toggleLora`, `setStrength`; `toggle`, `summary(2)`, `hintFor` und `generate` angebunden, festes `hint` und `later` von Box 2 entfernt.
+- `dashboard/static/index.html`: Inhalt der offenen Box 2 (LoRA-Zeilen mit Schalter, Name, Zahlenfeld, Entfernen und Regler, Zustands-Hinweise, Knöpfe „+ LoRA“ und „Auf Civitai suchen“, Auswahl-Liste); Platzhalter gilt nur noch für Box 1, 4 und 5.
+- `dashboard/static/css/dreamdeck.css`: neuer Abschnitt „Box 2: LoRA-Auswahl“ mit `.dd-lora`, `.dd-switch`, `.dd-input--strength`, `.dd-lora__range`, `.dd-lora-note`, `.dd-btn`, `.dd-picker` und `.dd-sr-only`, Farben nur über Tokens.
+- `ARCHITEKTUR.md`: Zeile „DreamDeck-Backend“ um die Endpunkt-Liste ergänzt.
+- `MERKLISTE.md`: 2g abgehakt mit Vermerk zur Browser-Kontrolle; Triggerwörter-Punkt unter „Etappe 2 – Ausbau“ angehängt; 2h bleibt offen.
 
-## Prüfung
-- `node --check static/js/app.js`: ohne Fehler.
-- Die Logik wurde einmal in Node nachgespielt (Kopie der Regeln, nicht die echte Oberfläche):
-  - 9:16 drehen: 9:16 wird zu 16:9, 2:3 bleibt 2:3.
-  - Seed 456481120448431030 wird angenommen und als Text unverändert geschickt.
-  - Seed 18446744073709551616 wird abgelehnt.
-  - Anzahl 9 wird zu 4, leer wird zu 1.
-- `app.py`: Syntaxprüfung nicht möglich, weil auf diesem Rechner kein `python3` vorhanden ist. Die Änderung sind zwei Zeilen und wurden nur gelesen.
+## Prüfungen
+- `node --check dashboard/static/js/app.js`: ohne Fehler.
+- Python-Syntax von `app.py`: **nicht geprüft** – in dieser Umgebung gibt es keinen Python-Interpreter. Bitte auf dem Pod nachholen (`python -m py_compile dashboard/app.py`); der Endpunkt selbst ist ebenfalls noch nicht gegen ComfyUI gelaufen.
+- Logik mit Node durchgespielt (app.js geladen, Alpine und fetch nachgebaut), alles bestanden:
+  - Laden schlägt fehl → `loraState` „fehler“; „Erneut laden“ → „ok“ mit 7 Dateien.
+  - LoRA hinzufügen → Auswahl schließt, Zusammenfassung „b · 0,80“, Kurzhinweis „1 von 6 · 1 aktiv“, Auftrag enthält `{ name: "flux/b.safetensors", strength: 0.8 }`.
+  - Ausschalten → Kurzhinweis „1 von 6 · 0 aktiv“, Zusammenfassung „keine“, Auftrag mit `loras: []`.
+  - Stärke 3 → 2, −5 → −2, „abc“ → 0.8, leer → 0.8, 0.83 → 0.85.
+  - Dieselbe Datei zweimal: bleibt bei einem Eintrag. Siebte LoRA: bleibt bei 6, „+ LoRA“ deaktiviert.
+  - Entfernen → Datei steht wieder in der Auswahl.
+- Nicht geprüft: Darstellung und Bedienung im Browser (Alpine-Vorlage, CSS, Regler am Rand bei Werten außerhalb 0–1.5).
 
 ## Auffälligkeiten
-- ⚠️ Der Dreh-Knopf ist mit 22 px kleiner als die 44-px-Regel für Touch. Das ist vertretbar, weil DreamDeck am Rechner bedient wird.
-- Der Dreh-Knopf hat eine eigene Klasse `.dd-rotate` statt `.dd-iconbtn`. Sonst hätte ihn die Regel für den Aufklapp-Pfeil (`.dd-box.is-open .dd-iconbtn svg`) mitgedreht. Er ist rund (`border-radius: 50%`), nicht nur mit runden Ecken.
-- Browser-Kontrolle steht noch aus: Optik, Dreh-Knopf in der Ecke, Reaktivität von `landscape` in Alpine.
-- Ein Seed ≥ 2^63 ist für ComfyUI zulässig, wurde aber nicht gegen die echte API getestet.
+- Zusätzlich zum Auftrag: Der Schlüssel der Zusammenfassungs-Zeilen in `index.html` ist jetzt der Index statt `row.k`. Zwei LoRAs mit gleichem Anzeigenamen aus verschiedenen Ordnern hätten sonst doppelte Schlüssel in `x-for`.
+- Zusätzlich zum Auftrag: Getter `canAddLora` (für `disabled` von „+ LoRA“, weil `LORA_MAX` in der Vorlage nicht sichtbar ist), Konstante `LORA_STRENGTH_DEFAULT` (0.8 an zwei Stellen) und die Klasse `.dd-sr-only` für das versteckte Label (gab es noch nicht).
+- „Erneut laden“ nutzt denselben Knopf-Stil `.dd-btn` wie „+ LoRA“.
+- Schalter: Die Pille ist 36 × 20 px, die Klickfläche drumherum 44 px hoch wie bei den übrigen Knöpfen.
+- „Noch keine LoRA gewählt“ erscheint nur, wenn Dateien vorhanden sind – sonst stünde es doppelt neben „Keine LoRAs auf dem Pod gefunden“.
+- `loadLoras()` startet nicht doppelt, solange ein Laden läuft. Nach einem Fehler lädt jedes erneute Öffnen von Box 2 neu; nach „ok“ wird nicht mehr automatisch neu geladen (neue Dateien auf dem Pod erst nach Seiten-Neuladen sichtbar).
+- Während des Tippens kann das Zahlenfeld kurz leer sein; die Zusammenfassung rechnet dann mit 0, bis das Feld verlassen wird und `setStrength` greift.
+- Der Übergang des Schalters wird bei `prefers-reduced-motion` über die vorhandene globale Regel abgeschaltet, keine eigene Regel nötig.
+- Kein neuer Timer.

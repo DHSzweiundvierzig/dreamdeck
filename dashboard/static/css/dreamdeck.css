@@ -457,6 +457,150 @@ button, textarea, input, select { font: inherit; color: inherit; }
   .dd-fields { grid-template-columns: 1fr; }
 }
 
+/* ---------- Box 2: LoRA-Auswahl ---------- */
+
+/* Nur für Vorlesehilfen sichtbar */
+.dd-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dd-loras {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Eine LoRA: Zeile mit Schalter, Name, Zahlenfeld und Entfernen, darunter der Regler */
+.dd-lora {
+  padding: 10px;
+  background: var(--dd-chip);
+  border: 1px solid var(--dd-line2);
+  border-radius: 10px;
+}
+.dd-lora.is-on { border-color: var(--dd-cyan); }
+.dd-lora__line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dd-lora__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--dd-dim);
+}
+.dd-lora.is-on .dd-lora__name { color: var(--dd-text); }
+.dd-lora .dd-iconbtn { flex: none; background: var(--dd-field); }
+
+/* Schalter: 36 × 20 px Pille, die Klickfläche drumherum ist 44 px hoch */
+.dd-switch {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.dd-switch__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--dd-line2);
+  border-radius: 10px;
+  transition: background .2s;
+}
+.dd-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  background: var(--dd-text);
+  border-radius: 50%;
+  transition: transform .2s, background .2s;
+}
+.dd-switch[aria-pressed="true"] .dd-switch__track { background: var(--dd-cyan); }
+.dd-switch[aria-pressed="true"] .dd-switch__track::after {
+  background: var(--dd-on-cyan);
+  transform: translateX(16px);
+}
+
+.dd-input--strength { flex: none; width: 76px; }
+
+.dd-lora__range {
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+  accent-color: var(--dd-cyan);
+  opacity: .45;
+}
+.dd-lora.is-on .dd-lora__range { opacity: 1; }
+
+/* Hinweise zu Ladezustand und leerer Liste */
+.dd-lora-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--dd-muted);
+}
+.dd-lora-note--err { color: var(--dd-err); }
+
+.dd-lora-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Knopf für „+ LoRA“, „Auf Civitai suchen“ und „Erneut laden“ */
+.dd-btn {
+  min-height: 44px;
+  padding: 6px 14px;
+  background: var(--dd-chip);
+  border: 1px solid var(--dd-cyan);
+  border-radius: 8px;
+  color: var(--dd-cyan-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+.dd-btn--magenta {
+  border-color: var(--dd-magenta);
+  color: var(--dd-magenta-text);
+}
+.dd-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Auswahl der freien LoRA-Dateien */
+.dd-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.dd-picker__item {
+  flex: none;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
 /* Einmaliges Flackern beim Aufklappen */
 @keyframes dd-flicker {
   0%   { opacity: 1; }

@@ -111,6 +111,28 @@ async def generate(job: GenerateIn, request: Request):
     return {"prompt_id": answer["prompt_id"], "seed": str(seed), "filename_prefix": filename_prefix}
 
 
+@app.get("/api/loras")
+async def loras(request: Request):
+    """Liefert die LoRA-Dateien, die ComfyUI auf dem Pod kennt.
+
+    Die Namen gehen unverändert als lora_name in den Workflow.
+    """
+    unreachable = JSONResponse({"fehler": "ComfyUI nicht erreichbar"}, status_code=503)
+    try:
+        response = await request.app.state.comfy.get("/models/loras")
+    except httpx.HTTPError:
+        return unreachable
+    if response.status_code != 200:
+        return unreachable
+    try:
+        names = response.json()
+    except ValueError:
+        return unreachable
+    if not isinstance(names, list):
+        return unreachable
+    return {"loras": sorted(str(name) for name in names)}
+
+
 @app.get("/api/events")
 async def events(request: Request):
     """Liefert die Fortschritts-Ereignisse als Server-Sent Events."""

@@ -71,7 +71,7 @@
 
           <!-- Zusammenfassung, solange die Box zu ist -->
           <dl class="dd-summary" x-show="!isOpen(step.n)">
-            <template x-for="row in summary(step.n)" :key="row.k">
+            <template x-for="(row, i) in summary(step.n)" :key="i">
               <div class="dd-summary__row">
                 <dt x-text="row.k"></dt>
                 <dd x-text="row.v"></dd>
@@ -174,8 +174,64 @@
 
               </div>
             </template>
-            <!-- Alle anderen Boxen: Platzhalter -->
-            <template x-if="step.n !== 3">
+            <!-- Box 2: LoRA-Auswahl -->
+            <template x-if="step.n === 2">
+              <div class="dd-loras">
+
+                <template x-for="lora in loras" :key="lora.id">
+                  <div class="dd-lora" :class="{ 'is-on': lora.on }">
+                    <div class="dd-lora__line">
+                      <button type="button" class="dd-switch"
+                              @click="toggleLora(lora.id)"
+                              :aria-pressed="lora.on.toString()"
+                              :aria-label="loraLabel(lora.name) + ' an oder aus'">
+                        <span class="dd-switch__track"></span>
+                      </button>
+                      <span class="dd-lora__name" :title="lora.name" x-text="loraLabel(lora.name)"></span>
+                      <label class="dd-sr-only" :for="'dd-lora-strength-' + lora.id"
+                             x-text="'Stärke ' + loraLabel(lora.name) + ' als Zahl'"></label>
+                      <input class="dd-input dd-input--strength" :id="'dd-lora-strength-' + lora.id"
+                             type="number" min="-2" max="2" step="0.05"
+                             x-model.number="lora.strength" @change="setStrength(lora, $event.target)">
+                      <button type="button" class="dd-iconbtn"
+                              @click="removeLora(lora.id)"
+                              :aria-label="loraLabel(lora.name) + ' entfernen'">−</button>
+                    </div>
+                    <!-- Regler deckt 0–1.5 ab; Werte außerhalb stehen am Rand, das Zahlenfeld zeigt den echten Wert -->
+                    <input class="dd-lora__range" type="range" min="0" max="1.5" step="0.05"
+                           x-model.number="lora.strength"
+                           :aria-label="'Stärke ' + loraLabel(lora.name)">
+                  </div>
+                </template>
+
+                <p class="dd-lora-note" role="status" x-show="loraState === 'laedt'">Lade LoRAs …</p>
+                <div class="dd-lora-note dd-lora-note--err" x-show="loraState === 'fehler'">
+                  <span>LoRAs konnten nicht geladen werden</span>
+                  <button type="button" class="dd-btn" @click="loadLoras()">Erneut laden</button>
+                </div>
+                <p class="dd-lora-note" x-show="loraState === 'ok' && loraFiles.length === 0">Keine LoRAs auf dem Pod gefunden</p>
+                <p class="dd-lora-note" x-show="loras.length === 0 && loraFiles.length > 0">Noch keine LoRA gewählt</p>
+
+                <div class="dd-lora-actions">
+                  <button type="button" class="dd-btn"
+                          @click="pickerOpen = !pickerOpen"
+                          :aria-expanded="pickerOpen.toString()"
+                          aria-controls="dd-lora-picker"
+                          :disabled="!canAddLora">+ LoRA</button>
+                  <button type="button" class="dd-btn dd-btn--magenta" disabled title="folgt in Etappe 5">Auf Civitai suchen</button>
+                </div>
+
+                <div class="dd-picker" id="dd-lora-picker" x-show="pickerOpen">
+                  <template x-for="name in freeLoraFiles" :key="name">
+                    <button type="button" class="dd-choice dd-picker__item"
+                            :title="name" x-text="loraLabel(name)" @click="addLora(name)"></button>
+                  </template>
+                </div>
+
+              </div>
+            </template>
+            <!-- Boxen 1, 4 und 5: Platzhalter -->
+            <template x-if="step.n !== 2 && step.n !== 3">
               <div class="dd-placeholder" x-text="step.later"></div>
             </template>
           </div>
