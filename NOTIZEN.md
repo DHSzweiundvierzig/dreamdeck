@@ -78,3 +78,4 @@
   - Das Dashboard lauscht bis Schritt 2j nur auf 127.0.0.1, der Zugriff läuft per SSH-Tunnel. Grund: nichts öffentlich, solange der Passwortschutz fehlt.
   - Reihenfolge je Schritt: Umsetzung → Commit + Sync → update.sh auf dem Pod → Browser-Kontrolle; Befunde als weiterer Commit. Grund: Der Pod holt den Code aus GitHub.
   - Zeitstempel im Dateinamen in Europe/Berlin, gesetzt vom Backend. Grund: unabhängig von der Zeitzone von Browser und Pod.
+- **15.11.2026 – Dashboard in eigener venv, alle Pakete fest gepinnt** – Grund: FastAPI und ComfyUI teilen Pakete (z. B. pydantic); ein ComfyUI-Update soll das Dashboard nicht verschieben und umgekehrt. Pins inkl. Unterabhängigkeiten in `dashboard/requirements.txt`, nur Versionen mit mind. 14 Tagen Alter. Port 8000 (`DASHBOARD_PORT` in `pod/paths.env`).

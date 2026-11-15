@@ -32,7 +32,7 @@
 ## Etappe 2 – Dashboard-MVP
 - [ ] Dashboard-MVP – Unterschritte:
   - [x] 2a Merkliste und Doku für Etappe 2 neu gegliedert
-  - [ ] 2b Backend-Gerüst: FastAPI, requirements.txt mit festen Versionen, liest pod/paths.env, Startseite, /api/health
+  - [x] 2b Backend-Gerüst: FastAPI, requirements.txt mit festen Versionen, liest pod/paths.env, Startseite, /api/health
   - [ ] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), pod/update.sh (Branch wechseln, neuen Stand holen, Dashboard neu starten), ANLEITUNG zum SSH-Tunnel – erster Pod-Test
   - [ ] 2d ComfyUI-Anbindung: Workflow bauen (checkpoint/split), Auftrag senden, filename_prefix mit Zeitstempel (Europe/Berlin)
   - [ ] 2e Fortschritt: ComfyUI-Websocket als Server-Sent Events an die Oberfläche
@@ -43,7 +43,7 @@
   - [ ] 2j Passwortschutz (DASHBOARD_PASSWORD), Erreichbarkeit (RunPod-Proxy oder SSH-Tunnel), RunPod-Dienste – ggf. neue Vorlage
   - [ ] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen
 - [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden – dabei beachten: RunPod exportiert alle Secrets auch in SSH- und Web-Terminal-Sitzungen (→ 2j)
-- [ ] Dashboard liest Pfade und Port aus pod/paths.env (→ 2b)
+- [x] Dashboard liest Pfade und Port aus pod/paths.env (→ 2b)
 - [x] Zeitzone für Datum/Uhrzeit im Dateinamen festlegen (ComfyUI-Oberfläche nutzt die Ortszeit des Browsers) – entschieden: Europe/Berlin, Umsetzung in 2d
 
 ## Etappe 2 – Ausbau (nach dem MVP)
