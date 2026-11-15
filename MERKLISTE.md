@@ -40,7 +40,8 @@
   - [x] 2g Prompt-Leiste: Prompt, Format-Presets, Seed, Batch-Anzahl – Browser-Kontrolle bestanden am 15.11.2026 (inkl. Seed 2^64 − 1)
   - [x] 2h LoRA-Auswahl (bis 6 gleichzeitig, mit Stärke-Regler) – Browser-Kontrolle bestanden am 15.11.2026 (PsyDreamer-Bild per Dashboard)
   - [x] 2i Backend für die Bühne: GET /api/bild, EventHub merkt letzten Stand (verbindung, warteschlange) – Pod-Test bestanden am 15.11.2026 (Hub sofort mit Stand, /api/bild 200/404/404)
-  - [ ] 2l Bühne in der Oberfläche: „Modell wird geladen“, Fortschrittsbalken, Bild mit Info-Karte, Verlauf der Sitzung
+  - [x] 2l Bühne in der Oberfläche: „Modell wird geladen“, Fortschrittsbalken, Bild mit Info-Karte, Verlauf der Sitzung – Browser-Kontrolle bestanden am 15.11.2026
+  - [ ] 2l Korrektur: Live-Verbindung nur bei sichtbarem Tab oder laufendem Auftrag (Chrome-Grenze 6 Verbindungen)
   - [ ] 2j Passwortschutz (DASHBOARD_PASSWORD), Erreichbarkeit (RunPod-Proxy oder SSH-Tunnel), RunPod-Dienste – ggf. neue Vorlage
   - [ ] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen und Vorlage wieder mit DREAMDECK_BRANCH=main anlegen
 - [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden – dabei beachten: RunPod exportiert alle Secrets auch in SSH- und Web-Terminal-Sitzungen (→ 2j)
@@ -50,6 +51,9 @@
 ## Etappe 2 – Ausbau (nach dem MVP)
 - [ ] Einstellungsseite: Modell-Sets mit Status und Nachladen, evtl. Set tauschen
 - [ ] Modell-Dropdown nach Ladeart (checkpoint/split)
+- [ ] Bühnenbild per Klick groß anzeigen (Vollbild-Ansicht)
+- [ ] Boxen per Klick irgendwo in die geschlossene Box öffnen, Pfeil entfernen; offene Box über die Kopfzeile schließen (Regler-Klicks dürfen nicht schließen)
+- [ ] Live-Verbindung (live) in der Kopfzeile anzeigen; Warteschlangen-Position des eigenen Auftrags statt Gesamtlänge
 - [ ] LoRA per Civitai-Link oder Versionsnummer nachladen (nutzt civitai_lora/download_file)
 - [ ] Klick-Tutorial mit An/Aus-Schalter: Erklär-Boxen an jedem Menü/Dropdown, Schritt für Schritt
 - [ ] GPU-Name in der Kopfzeile (aus ComfyUI /system_stats über /api/health durchreichen)

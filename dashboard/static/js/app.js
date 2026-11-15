@@ -99,6 +99,9 @@ document.addEventListener("alpine:init", () => {
     message: "",
     messageKind: "",
 
+    // Hält die aktuelle SSE-Verbindung zum Backend oder null (nicht reaktiv nötig)
+    eventSource: null,
+
     // Live-Stand: SSE-Verbindung zu ComfyUI (Ereignis „verbindung“) und Länge der Warteschlange
     live: false,
     queueCount: 0,
@@ -117,18 +120,41 @@ document.addEventListener("alpine:init", () => {
       this.checkHealth();
       setInterval(() => this.checkHealth(), HEALTH_INTERVAL_MS);
 
-      // Live-Ereignisse vom Backend. EventSource verbindet sich bei Abbruch
-      // selbst neu, deshalb braucht es hier keinen eigenen Timer.
-      const source = new EventSource("/api/events");
-      source.onmessage = (message) => {
-        let event;
-        try {
-          event = JSON.parse(message.data);
-        } catch (error) {
-          return;
-        }
-        this.onEvent(event);
-      };
+      // Live-Ereignisse vom Backend, nur solange der Tab sichtbar ist oder ein
+      // eigener Auftrag läuft (siehe syncEvents).
+      this.syncEvents();
+      document.addEventListener("visibilitychange", () => {
+        this.syncEvents();
+        if (!document.hidden) this.checkHealth();
+      });
+      window.addEventListener("pagehide", () => {
+        if (this.eventSource) this.eventSource.close();
+        this.eventSource = null;
+      });
+    },
+
+    // Öffnet oder schließt die SSE-Verbindung passend zum Soll-Zustand.
+    // Chrome erlaubt nur 6 Verbindungen je Adresse; Hintergrund-Tabs ohne
+    // laufenden Auftrag geben ihre frei. Beim Wiederverbinden schickt der Hub
+    // den letzten Stand sofort. EventSource verbindet sich bei Abbruch selbst
+    // neu, deshalb braucht es keinen eigenen Timer.
+    syncEvents() {
+      const wanted = !document.hidden || this.isRunning;
+      if (wanted && !this.eventSource) {
+        this.eventSource = new EventSource("/api/events");
+        this.eventSource.onmessage = (message) => {
+          let event;
+          try {
+            event = JSON.parse(message.data);
+          } catch (error) {
+            return;
+          }
+          this.onEvent(event);
+        };
+      } else if (!wanted && this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+      }
     },
 
     // Klick auf die offene Box schließt sie wieder.
@@ -392,6 +418,7 @@ document.addEventListener("alpine:init", () => {
               promptId: data.prompt_id,
             };
           }
+          this.syncEvents();
         } else if (data.fehler) {
           this.say(data.fehler, "err");
         } else if (data.detail) {
@@ -449,12 +476,15 @@ document.addEventListener("alpine:init", () => {
             // Auftrag ohne Bild: ein altes Bild bleibt stehen, sonst leere Bühne
             stage.phase = stage.image ? "fertig" : "leer";
           }
+          // Im Hintergrund-Tab jetzt die Verbindung freigeben
+          this.syncEvents();
           break;
         }
         case "fehler":
           stage.phase = "fehler";
           stage.promptId = event.prompt_id;
           stage.error = event.meldung || "Unbekannter Fehler";
+          this.syncEvents();
           break;
       }
     },
