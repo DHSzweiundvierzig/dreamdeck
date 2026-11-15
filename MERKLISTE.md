@@ -38,8 +38,9 @@
   - [x] 2e Fortschritt: ComfyUI-Websocket als Server-Sent Events an die Oberfläche – Pod-Test bestanden am 15.11.2026 (start, fortschritt 1–20, fertig mit Bild, warteschlange)
   - [x] 2f Oberflächen-Gerüst nach Variante B, Alpine.js fest im Repo und gepinnt – Browser-Kontrolle bestanden am 15.11.2026
   - [x] 2g Prompt-Leiste: Prompt, Format-Presets, Seed, Batch-Anzahl – Browser-Kontrolle bestanden am 15.11.2026 (inkl. Seed 2^64 − 1)
-  - [ ] 2h LoRA-Auswahl (bis 6 gleichzeitig, mit Stärke-Regler)
-  - [ ] 2i Live-Fortschritt und Ergebnisse auf der Bühne
+  - [x] 2h LoRA-Auswahl (bis 6 gleichzeitig, mit Stärke-Regler) – Browser-Kontrolle bestanden am 15.11.2026 (PsyDreamer-Bild per Dashboard)
+  - [ ] 2i Backend für die Bühne: GET /api/bild, EventHub merkt letzten Stand (verbindung, warteschlange)
+  - [ ] 2l Bühne in der Oberfläche: „Modell wird geladen“, Fortschrittsbalken, Bild mit Info-Karte, Verlauf der Sitzung
   - [ ] 2j Passwortschutz (DASHBOARD_PASSWORD), Erreichbarkeit (RunPod-Proxy oder SSH-Tunnel), RunPod-Dienste – ggf. neue Vorlage
   - [ ] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen und Vorlage wieder mit DREAMDECK_BRANCH=main anlegen
 - [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden – dabei beachten: RunPod exportiert alle Secrets auch in SSH- und Web-Terminal-Sitzungen (→ 2j)
@@ -55,7 +56,7 @@
 - [ ] Anzeige „Drive-Sync aktiv“ in der Kopfzeile – Datenquelle klären
 - [ ] Seed-Modus „+1 je Bild“ / „−1 je Bild“ (braucht mehrere Aufträge statt eines Batches)
 - [ ] Deko-Streifen der Boxen näher am Entwurf (schräg, größer, Farbe)
-- [ ] Triggerwörter zu LoRAs anzeigen und per Knopf in den Prompt einfügen (Daten aus Civitai, → Etappe 5)
+- [ ] Triggerwörter zu LoRAs anzeigen und per Knopf in den Prompt einfügen (Daten aus Civitai, → Etappe 5) und lesbare Anzeigenamen statt Dateinamen (z. B. FLUX_Psy_Dreamer_Style-000007 → PsyDreamer)
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten

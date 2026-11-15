@@ -8,12 +8,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .config import COMFY_URL
+from .config import COMFY_URL, OUTPUT_DIR
 from .events import EventHub, listen_comfyui
 from .workflow import build_flux_workflow
 
@@ -157,6 +157,26 @@ async def events(request: Request):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+IMAGE_SUFFIXES = (".png", ".webp", ".jpg", ".jpeg")
+
+
+@app.get("/api/bild")
+async def image(
+    datei: str = Query(..., min_length=1, max_length=200),
+    ordner: str = Query("", max_length=200),
+):
+    """Liefert ein fertiges Bild aus dem Output-Ordner.
+
+    datei und ordner kommen aus dem Ereignis „fertig" (Felder datei/ordner).
+    Schutz gegen ../ und absolute Pfade durch resolve + is_relative_to.
+    """
+    base = Path(OUTPUT_DIR).resolve()
+    target = (base / ordner / datei).resolve()
+    if not (target.is_relative_to(base) and target.is_file() and target.suffix.lower() in IMAGE_SUFFIXES):
+        return JSONResponse({"fehler": "Bild nicht gefunden"}, status_code=404)
+    return FileResponse(target, headers={"Cache-Control": "private, max-age=86400"})
 
 
 # Statische Dateien zuletzt einhängen, damit die API-Routen Vorrang haben.

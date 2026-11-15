@@ -16,6 +16,8 @@ QUEUE_SIZE = 100
 # Obergrenze je Websocket-Nachricht (Vorschaubilder können groß sein).
 MAX_MESSAGE_BYTES = 16 * 1024 * 1024
 RECONNECT_SECONDS = 3.0
+# Diese Ereignisse beschreiben einen Zustand; neue Browser bekommen den letzten Stand sofort.
+STICKY_TYPES = ("verbindung", "warteschlange")
 
 
 class EventHub:
@@ -23,10 +25,19 @@ class EventHub:
 
     def __init__(self) -> None:
         self._queues: set[asyncio.Queue] = set()
+        # Letzter Stand je Zustands-Ereignis (Schlüssel = Ereignis-Typ).
+        self._last: dict[str, dict] = {}
 
     def subscribe(self) -> asyncio.Queue:
-        """Legt eine neue Queue an, merkt sie und gibt sie zurück."""
+        """Legt eine neue Queue an, füllt sie mit dem letzten Stand und gibt sie zurück.
+
+        Gemerkte Zustands-Ereignisse (erst verbindung, dann warteschlange) liegen
+        schon in der Queue, bevor der Browser das erste Mal liest.
+        """
         queue: asyncio.Queue = asyncio.Queue(maxsize=QUEUE_SIZE)
+        for typ in STICKY_TYPES:
+            if typ in self._last:
+                queue.put_nowait(self._last[typ])
         self._queues.add(queue)
         return queue
 
@@ -37,8 +48,15 @@ class EventHub:
     def publish(self, event: dict) -> None:
         """Stellt das Ereignis in alle Queues. Blockiert nie und wirft nie.
 
+        Zustands-Ereignisse (STICKY_TYPES) werden gemerkt; gleicht eines dem
+        gemerkten, wird es nicht erneut verteilt (glättet Doppelmeldungen).
         Ist eine Queue voll (langsamer Browser), fliegt ihr ältestes Ereignis raus.
         """
+        typ = event.get("typ")
+        if typ in STICKY_TYPES:
+            if self._last.get(typ) == event:
+                return
+            self._last[typ] = event
         for queue in list(self._queues):
             try:
                 queue.put_nowait(event)

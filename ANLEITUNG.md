@@ -66,6 +66,14 @@ Welche LoRAs der Pod beim Start lädt, steht in `pod/loras.toml`. Eingetragen wi
 3. Fenster offen lassen. Im Browser: Dashboard `http://localhost:8000`, ComfyUI `http://localhost:8188`.
 4. Zum Beenden in der SSH-Sitzung `exit`; damit ist auch der Tunnel zu.
 
+#### Neuen Code ohne neuen Pod holen
+In der SSH-Sitzung auf dem Pod:
+```
+cd /workspace/dreamdeck && git pull
+pkill -f "uvicorn dashboard.app"; env -u CIVITAI_TOKEN nohup /workspace/venv-dashboard/bin/uvicorn dashboard.app:app --app-dir /workspace/dreamdeck --host 127.0.0.1 --port 8000 > /workspace/logs/dashboard.log 2>&1 &
+```
+Hinweis: Das gilt für Änderungen am Dashboard. Änderungen an `pod/start.sh` oder den Modell-Listen brauchen weiterhin einen neuen Pod.
+
 ## Pod beenden
 1. Im Web-Terminal: `bash /workspace/dreamdeck/pod/sync.sh` und auf „Sync fertig“ warten.
 2. Im Google Drive im Ordner DreamDeck kurz prüfen, ob die letzten Bilder da sind.
