@@ -12,7 +12,7 @@
     |---|---|---|
     | GITHUB_TOKEN | Pod klont das private Repo | Etappe 1 |
     | CIVITAI_TOKEN | LoRAs von Civitai laden | Etappe 1 |
-    | RCLONE_DRIVE_TOKEN | Bilder ins Google Drive | Etappe 1 |
+    | DREAMDECK_DRIVE_TOKEN | Bilder ins Google Drive | Etappe 1 |
     | DASHBOARD_PASSWORD | Schutz der Oberfläche | Etappe 2 |
     | ANTHROPIC_API_KEY | Prompt-Helfer | Etappe 4, optional |
 
@@ -20,7 +20,7 @@
   - rclone bekommt nur Zugriff auf selbst angelegte Dateien (Drive-Scope `drive.file`). Grund: DreamDeck kann den Rest des Drives weder lesen noch löschen.
   - GITHUB_TOKEN läuft am 15.05.2027 ab.
   - CIVITAI_TOKEN nutzt das Civitai-Preset „Read Only“. Grund: Der Pod muss nur LoRAs laden. Für den Upload in Etappe 5 wird ein eigener Key mit passenden Schreibrechten angelegt, dieser hier wird nicht erweitert.
-  - RCLONE_DRIVE_TOKEN liegt base64-kodiert vor (so gibt `rclone authorize` den Token aus). Das Startskript muss ihn vor der Nutzung auspacken.
+  - DREAMDECK_DRIVE_TOKEN liegt base64-kodiert vor (so gibt `rclone authorize` den Token aus). Das Startskript muss ihn vor der Nutzung auspacken.
   - Kein HF_TOKEN nötig, solange FLUX aus der frei zugänglichen Comfy-Org-Kopie auf Hugging Face geladen wird.
 - **LoRA-Bibliothek als Datei im Repo, ohne Token; der Pod lädt beim Start per Civitai-Secret** – Liste ist versionierbar, der Zugang bleibt geheim.
 - **Formate als Presets um ca. 1 MP, Auflösung immer durch 16 teilbar, über 2 MP Warnung** – passt zu den Modellen, vermeidet Fehler und Speicherprobleme.
@@ -69,3 +69,4 @@
   - Manueller letzter Sync ohne Mindestalter.
   - flock gegen Überschneidung von Schleife und manuellem Sync.
   - copy statt move, damit ComfyUI die Bilder bis zum Pod-Ende behält.
+- **15.11.2026 – Drive-Secret heißt DREAMDECK_DRIVE_TOKEN** – Grund: rclone liest `RCLONE_DRIVE_*` als eigene Optionen (`RCLONE_DRIVE_TOKEN` = Option „token“) und überschreibt damit die Konfiguration; RunPod exportiert Secrets auch in SSH-Sitzungen, dort hat der alte Name den manuellen Sync gestört.

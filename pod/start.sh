@@ -85,7 +85,7 @@ step_secure_repo() {
 step_check_secrets() {
     local name
     local missing=0
-    for name in CIVITAI_TOKEN RCLONE_DRIVE_TOKEN; do
+    for name in CIVITAI_TOKEN DREAMDECK_DRIVE_TOKEN; do
         if [ -n "${!name:-}" ]; then
             log "Secret $name: gesetzt"
         else
@@ -179,7 +179,7 @@ zipfile.ZipFile(sys.argv[1]).extract(sys.argv[2], sys.argv[3])
     rm -rf "$zip_file" "$extract_dir"
 }
 
-# rclone-Konfiguration aus RCLONE_DRIVE_TOKEN schreiben (base64 ohne Padding,
+# rclone-Konfiguration aus DREAMDECK_DRIVE_TOKEN schreiben (base64 ohne Padding,
 # darin JSON mit Feld „token“), Token aus der Umgebung löschen, Verbindung testen
 # und Ordner DreamDeck anlegen. Der Tokeninhalt wird nie ausgegeben.
 # Läuft ohne Subshell, damit unset in der Hauptshell wirkt.
@@ -188,12 +188,12 @@ step_configure_rclone() {
 import base64, json, os, sys
 conf_path, remote = sys.argv[1], sys.argv[2]
 try:
-    raw = os.environ["RCLONE_DRIVE_TOKEN"].strip()
+    raw = os.environ["DREAMDECK_DRIVE_TOKEN"].strip()
     raw += "=" * (-len(raw) % 4)
     token = json.loads(base64.b64decode(raw))["token"]
     json.loads(token)
 except Exception:
-    print("RCLONE_DRIVE_TOKEN ist unbrauchbar (Dekodieren fehlgeschlagen oder Feld token fehlt)")
+    print("DREAMDECK_DRIVE_TOKEN ist unbrauchbar (Dekodieren fehlgeschlagen oder Feld token fehlt)")
     sys.exit(1)
 token = json.dumps(json.loads(token))
 os.makedirs(os.path.dirname(conf_path), exist_ok=True)
@@ -201,10 +201,10 @@ fd = os.open(conf_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
 with os.fdopen(fd, "w") as f:
     f.write("[%s]\ntype = drive\nscope = drive.file\ntoken = %s\n" % (remote, token))
 ' "$RCLONE_CONF" "$RCLONE_REMOTE"; then
-        unset RCLONE_DRIVE_TOKEN
+        unset DREAMDECK_DRIVE_TOKEN
         return 1
     fi
-    unset RCLONE_DRIVE_TOKEN
+    unset DREAMDECK_DRIVE_TOKEN
     if ! rclone --config "$RCLONE_CONF" mkdir "$RCLONE_REMOTE:$DRIVE_FOLDER"; then
         log "rclone-Verbindung fehlgeschlagen – Token abgelaufen? Siehe ANLEITUNG, Zugänge erneuern"
         return 1
