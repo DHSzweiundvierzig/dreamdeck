@@ -35,7 +35,7 @@
   - [x] 2b Backend-Gerüst: FastAPI, requirements.txt mit festen Versionen, liest pod/paths.env, Startseite, /api/health
   - [x] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), ANLEITUNG zum SSH-Tunnel – erster Pod-Test (bestanden am 15.11.2026)
   - [x] 2d ComfyUI-Anbindung: Workflow aus Vorlage (split) mit LoRA-Kette, POST /api/generate, filename_prefix mit Monatsordner und Zeitstempel (Europe/Berlin) – Pod-Test bestanden am 15.11.2026, Bild identisch mit dem ComfyUI-Testbild
-  - [ ] 2e Fortschritt: ComfyUI-Websocket als Server-Sent Events an die Oberfläche
+  - [x] 2e Fortschritt: ComfyUI-Websocket als Server-Sent Events an die Oberfläche – Pod-Test bestanden am 15.11.2026 (start, fortschritt 1–20, fertig mit Bild, warteschlange)
   - [ ] 2f Oberflächen-Gerüst nach Variante B, Alpine.js fest im Repo und gepinnt
   - [ ] 2g Prompt-Leiste: Prompt, Format-Presets, Seed, Batch-Anzahl
   - [ ] 2h LoRA-Auswahl (bis 6 gleichzeitig, mit Stärke-Regler)

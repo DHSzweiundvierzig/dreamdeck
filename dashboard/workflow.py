@@ -47,12 +47,15 @@ def find_node(workflow: dict, title: str) -> str:
 def make_filename_prefix() -> str:
     """Dateinamen-Präfix mit Monatsordner und Zeitstempel (Europe/Berlin).
 
-    Beispiel: ``2026-11/dreamdeck_20261115-153000``. Monat und Zeitstempel
+    Format nach der Ablage-Regel in NOTIZEN.md (14.11.2026): Ordner
+    JJJJ-MM, Dateiname JJJJ-MM-TT_hhmmss; ComfyUI hängt _NNNNN_ an.
+    Beispiel: ``2026-11/2026-11-15_170616`` ergibt
+    ``2026-11/2026-11-15_170616_00001_.png``. Monat und Zeitstempel
     stammen aus demselben Zeitpunkt. ComfyUI legt den Unterordner im
     Output-Ordner selbst an, der Sync übernimmt ihn ins Drive.
     """
     now = datetime.now(ZoneInfo("Europe/Berlin"))
-    return now.strftime("%Y-%m/dreamdeck_%Y%m%d-%H%M%S")
+    return now.strftime("%Y-%m/%Y-%m-%d_%H%M%S")
 
 
 def build_flux_workflow(
