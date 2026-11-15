@@ -350,15 +350,56 @@ button, textarea, input, select { font: inherit; color: inherit; }
   border-color: var(--dd-cyan);
   color: var(--dd-text);
 }
-/* Format-Knopf: Formvorschau über der Beschriftung, unten bündig */
+/* Format-Knopf: feste Größe, Formvorschau oben über der Beschriftung */
 .dd-choice--shape {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 6px;
-  min-width: 56px;
-  min-height: 64px;
+  width: 64px;
+  height: 68px;
+}
+.dd-choice--wide { width: auto; min-width: 72px; }
+
+/* Wrapper je Format, damit der Dreh-Knopf neben dem Auswahl-Knopf sitzt */
+.dd-choicewrap { position: relative; }
+
+/* Festes Feld für die Formvorschau: Drehen verändert den Knopf nicht */
+.dd-shape-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+/* Dreh-Knopf in der Ecke, leicht über den Rand gesetzt */
+.dd-rotate {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: var(--dd-chip);
+  border: 1px solid var(--dd-line2);
+  border-radius: 50%;
+  color: var(--dd-muted);
+  cursor: pointer;
+}
+.dd-rotate:hover { color: var(--dd-text); }
+.dd-rotate svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .dd-shape {
@@ -368,10 +409,7 @@ button, textarea, input, select { font: inherit; color: inherit; }
 }
 .dd-shape--dashed { border-style: dashed; }
 
-.dd-iconbtn--large { width: 44px; height: 44px; }
 .dd-iconbtn:disabled { opacity: .4; cursor: not-allowed; }
-/* Das Drehen-Symbol dreht sich nicht mit dem Aufklapp-Pfeil */
-.dd-box.is-open .dd-iconbtn--large svg { transform: none; }
 
 /* Auflösung rechts neben der Größenwahl */
 .dd-resolution {

@@ -41,6 +41,7 @@
   - Verbindung zu ComfyUI: HTTP für Aufträge und Bilder, Websocket-Client für den Fortschritt. Grund: ComfyUI meldet Fortschritt nur per Websocket.
   - Nur DreamDeck ist von außen erreichbar, ComfyUI nur intern. Grund: Ein Passwort schützt alles.
   - Frontend: schlichtes HTML/CSS/JS ohne Build-Schritt, als klassisches Script mit einer Alpine-Komponente. Grund: läuft ohne Modul-Lader; Namenskonflikte vermeidet die Komponente. Bei Bedarf später in mehrere Dateien aufteilen.
+  - Seeds bis 2^64 − 1 (Grenze von ComfyUI); zwischen Oberfläche und Backend als Text übertragen, weil JavaScript Zahlen über 2^53 ungenau rechnet. Jedes Format merkt sich seine Ausrichtung selbst.
   - Alpine.js für die datengetriebenen Bereiche (Step-Boxen, LoRA-Liste). Die Datei liegt fest im Repo statt per CDN, Version wird beim Einbinden in Etappe 2 festgelegt und gepinnt. Grund: Oberfläche aktualisiert sich aus den Daten von selbst; kein Build nötig.
   - Live-Fortschritt per Server-Sent Events, alles andere per fetch. Grund: Fortschritt ändert sich mehrmals pro Sekunde, Polling wäre zu träge.
   - Tests direkt auf dem Pod gegen das echte ComfyUI (15.11.2026, ersetzt den Plan mit Spiel-ComfyUI auf der devbox). Grund: Die Pod-Kosten sind bewusst akzeptiert; getestet wird gegen die echte API, und das Spiel-ComfyUI entfällt als eigener Bauteil.

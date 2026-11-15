@@ -34,7 +34,9 @@ class GenerateIn(BaseModel):
 
     prompt: str = Field(min_length=1, max_length=2000)
     # Fehlt der Seed, wird er im Endpunkt zufällig gewählt (0 bis 2^32 - 1).
-    seed: int | None = Field(default=None, ge=0)
+    # Erlaubt sind Seeds bis 2^64 - 1 (Grenze von ComfyUI); die Oberfläche
+    # schickt sie als Text, Pydantic wandelt um.
+    seed: int | None = Field(default=None, ge=0, le=2**64 - 1)
     width: int = Field(default=768, ge=256, le=2048, multiple_of=16)
     height: int = Field(default=1344, ge=256, le=2048, multiple_of=16)
     steps: int = Field(default=25, ge=1, le=60)
@@ -106,7 +108,7 @@ async def generate(job: GenerateIn, request: Request):
             {"fehler": "ComfyUI hat den Auftrag abgelehnt", "details": answer},
             status_code=422,
         )
-    return {"prompt_id": answer["prompt_id"], "seed": seed, "filename_prefix": filename_prefix}
+    return {"prompt_id": answer["prompt_id"], "seed": str(seed), "filename_prefix": filename_prefix}
 
 
 @app.get("/api/events")

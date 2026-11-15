@@ -18,8 +18,8 @@ document.addEventListener("alpine:init", () => {
   const DIM_MAX = 2048;
   // Größte Kante der Formvorschau in Pixeln
   const SHAPE_MAX = 28;
-  // Höchster erlaubter Seed (2^32 − 1)
-  const SEED_MAX = 4294967295;
+  // Höchster erlaubter Seed als Text: 2^64 − 1, Grenze von ComfyUI
+  const SEED_MAX = "18446744073709551615";
 
   // Rundet auf 16 und begrenzt auf 256–2048. Ungültige Eingaben ergeben 256.
   function snap(v) {
@@ -36,7 +36,7 @@ document.addEventListener("alpine:init", () => {
     steps: [
       { n: 1, code: "DD//01·MDL", title: "Modelle", hint: "FLUX.1 [dev]", later: "Auswahl folgt später" },
       { n: 2, code: "DD//02·LRA", title: "LoRAs", hint: "bis zu 6 gleichzeitig", later: "folgt in 2h" },
-      { n: 3, code: "DD//03·FMT", title: "Format", hint: "9:16 · 768 × 1344" },
+      { n: 3, code: "DD//03·FMT", title: "Format" },
       { n: 4, code: "DD//04·TUN", title: "Feintuning", hint: "25 Schritte · Guidance 3.5", later: "folgt später" },
       { n: 5, code: "DD//05·OUT", title: "Speichern", hint: "Monatsordner · Drive", later: "folgt später" },
     ],
@@ -56,8 +56,8 @@ document.addEventListener("alpine:init", () => {
       { key: "eigen", label: "Eigenes" },
     ],
     format: "9:16",
-    // Quer statt hoch – gilt für das aktive Format, bei 1:1 ohne Wirkung.
-    landscape: false,
+    // Quer statt hoch, je Format, z. B. { "9:16": true } – bei 1:1 und "eigen" ohne Wirkung.
+    landscape: {},
 
     // Größenstufen: der Faktor wirkt auf beide Kanten (0,6 / 1 / 1,6-fache Fläche).
     sizes: [
@@ -106,10 +106,10 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Kanten [Breite, Höhe] eines Formats ohne Größenfaktor – Grundlage für
-    // Auflösung und Formvorschau. Gedreht wird nur das aktive Format.
+    // Auflösung und Formvorschau. Jedes Format wird nach seinem eigenen Eintrag gedreht.
     baseDims(f) {
       if (f.key === "eigen") return [snap(this.custom.w), snap(this.custom.h)];
-      return this.landscape && f.key === this.format ? [f.h, f.w] : [f.w, f.h];
+      return this.landscape[f.key] ? [f.h, f.w] : [f.w, f.h];
     },
 
     // Breite und Höhe des Auftrags – die einzige Stelle, an der sie berechnet werden.
@@ -137,11 +137,17 @@ document.addEventListener("alpine:init", () => {
       return this.megapixels > 2 ? text + " · sehr groß" : text;
     },
 
-    // Beschriftung eines Formats; das aktive wird bei Querformat umgedreht (9:16 → 16:9).
+    // Beschriftung eines Formats; bei Querformat umgedreht (9:16 → 16:9).
     formatLabel(f) {
       if (f.label) return f.label;
-      const parts = f.key.split(":");
-      return this.landscape && f.key === this.format ? parts.reverse().join(":") : f.key;
+      return this.landscape[f.key] ? f.key.split(":").reverse().join(":") : f.key;
+    },
+
+    // Kurzhinweis im Box-Kopf; bei Box 3 live aus dem aktiven Format.
+    hintFor(step) {
+      if (step.n !== 3) return step.hint;
+      const active = this.formats.find((f) => f.key === this.format);
+      return `${this.formatLabel(active)} · ${this.width} × ${this.height}`;
     },
 
     // Maße der kleinen Formvorschau im Seitenverhältnis des Formats
@@ -151,13 +157,21 @@ document.addEventListener("alpine:init", () => {
       return `width: ${Math.round(w * scale)}px; height: ${Math.round(h * scale)}px`;
     },
 
-    // Hoch/Quer wechseln: bei "eigen" die Maße tauschen, sonst Querformat umschalten.
-    rotate() {
-      if (this.isCustom) {
+    // Wählt das Format aus und dreht es: bei "eigen" die Maße tauschen, bei 1:1 nichts.
+    rotate(f) {
+      this.format = f.key;
+      if (f.key === "eigen") {
         this.custom = { w: this.custom.h, h: this.custom.w };
-      } else {
-        this.landscape = !this.landscape;
+      } else if (f.key !== "1:1") {
+        this.landscape[f.key] = !this.landscape[f.key];
       }
+    },
+
+    // Übernimmt die Anzahl beim Verlassen des Feldes: ganze Zahl 1–4, sonst 1.
+    setBatch(input) {
+      const n = Math.trunc(Number(input.value));
+      this.batch = n >= 1 ? Math.min(n, 4) : 1;
+      input.value = this.batch;
     },
 
     // Übernimmt ein eigenes Maß beim Verlassen des Feldes; side ist "w" oder "h".
@@ -206,11 +220,12 @@ document.addEventListener("alpine:init", () => {
       let seed = null;
       if (this.seedMode === "fest") {
         const text = this.seed.trim();
-        seed = /^\d+$/.test(text) ? Number(text) : NaN;
-        if (!(seed <= SEED_MAX)) {
-          this.say("Seed muss eine ganze Zahl sein", "err");
+        if (!/^\d+$/.test(text) || BigInt(text) > BigInt(SEED_MAX)) {
+          this.say("Seed: nur Ziffern, höchstens " + SEED_MAX, "err");
           return;
         }
+        // Als Text schicken, damit nichts über 2^53 ungenau wird
+        seed = text;
       }
 
       this.busy = true;

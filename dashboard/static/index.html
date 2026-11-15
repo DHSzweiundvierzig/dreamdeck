@@ -51,7 +51,7 @@
             <div class="dd-box__titles">
               <p class="dd-box__code" x-text="step.code"></p>
               <h2 class="dd-label" x-text="step.title"></h2>
-              <p class="dd-box__hint" x-text="step.hint"></p>
+              <p class="dd-box__hint" x-text="hintFor(step)"></p>
             </div>
             <div class="dd-box__actions">
               <button type="button" class="dd-iconbtn"
@@ -89,25 +89,30 @@
                   <div class="dd-format__line">
                     <div class="dd-choices" role="group" aria-labelledby="dd-ratio-label">
                       <template x-for="f in formats" :key="f.key">
-                        <button type="button" class="dd-choice dd-choice--shape"
-                                @click="format = f.key"
-                                :aria-pressed="(format === f.key).toString()">
-                          <span class="dd-shape" aria-hidden="true"
-                                :class="{ 'dd-shape--dashed': f.key === 'eigen' }"
-                                :style="shapeStyle(f)"></span>
-                          <span x-text="formatLabel(f)"></span>
-                        </button>
+                        <div class="dd-choicewrap">
+                          <button type="button" class="dd-choice dd-choice--shape"
+                                  :class="{ 'dd-choice--wide': f.key === 'eigen' }"
+                                  @click="format = f.key"
+                                  :aria-pressed="(format === f.key).toString()">
+                            <span class="dd-shape-slot">
+                              <span class="dd-shape" aria-hidden="true"
+                                    :class="{ 'dd-shape--dashed': f.key === 'eigen' }"
+                                    :style="shapeStyle(f)"></span>
+                            </span>
+                            <span x-text="formatLabel(f)"></span>
+                          </button>
+                          <button type="button" class="dd-rotate"
+                                  x-show="f.key !== '1:1'"
+                                  @click="rotate(f)"
+                                  :aria-label="formatLabel(f) + ' drehen'" title="Hoch/Quer drehen">
+                            <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+                              <path d="M13 8a5 5 0 1 1-1.6-3.7"/>
+                              <polyline points="13,2 13,5 10,5"/>
+                            </svg>
+                          </button>
+                        </div>
                       </template>
                     </div>
-                    <button type="button" class="dd-iconbtn dd-iconbtn--large"
-                            @click="rotate()"
-                            :disabled="format === '1:1'"
-                            aria-label="Hoch/Quer drehen" title="Hoch/Quer drehen">
-                      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-                        <path d="M13 8a5 5 0 1 1-1.6-3.7"/>
-                        <polyline points="13,2 13,5 10,5"/>
-                      </svg>
-                    </button>
                   </div>
                 </div>
 
@@ -163,7 +168,7 @@
                   <div class="dd-field">
                     <label class="dd-fieldlabel" for="dd-batch">Anzahl Bilder</label>
                     <input class="dd-input" id="dd-batch" type="number" min="1" max="4"
-                           x-model.number="batch">
+                           x-model.number="batch" @change="setBatch($event.target)">
                   </div>
                 </div>
 
