@@ -12,7 +12,8 @@
 bash -c 'rm -rf /workspace/dreamdeck; git clone --depth 1 -b "${DREAMDECK_BRANCH:-main}" "https://x-access-token:${GITHUB_TOKEN}@github.com/DHSzweiundvierzig/dreamdeck.git" /workspace/dreamdeck && exec bash /workspace/dreamdeck/pod/start.sh || { echo "DreamDeck: Klonen fehlgeschlagen"; /start.sh & sleep infinity; }'
 ```
 
-4. Expose TCP Ports: `22` mit Label `SSH`. Bei „Expose HTTP Ports“ nichts eintragen (ComfyUI bleibt intern).
+4. Expose HTTP Ports: `8000` (Dashboard). Expose TCP Ports: `22` mit Label `SSH`. Port 8188 (ComfyUI) nicht eintragen, ComfyUI bleibt intern.
+   Hinweis: Der Port muss zu `DASHBOARD_PORT` in `pod/paths.env` passen.
 5. Container Disk: 50 GB, Volume Disk: 0 GB.
 6. Environment Variables: Auf „Raw editor“ klicken, diesen Block einfügen und mit „Update Variables“ übernehmen:
 
@@ -60,7 +61,10 @@ Hinweis: Prüfsummen, die beim ersten Lauf gemessen werden, stehen im Protokoll 
 Welche LoRAs der Pod beim Start lädt, steht in `pod/loras.toml`. Eingetragen wird nur die Civitai-Versionsnummer: auf der Modellseite die Version wählen, die Zahl hinter `modelVersionId=` in der Adresse ist die Versionsnummer; den Namen als Kommentar dahinter schreiben. Dateiname, Größe und Prüfsumme holt der Pod selbst von Civitai. Erlaubt sind nur LoRAs für Flux.1 D im Format SafeTensor. Die Liste bewusst klein halten – weitere LoRAs kommen später übers Dashboard.
 
 ## Arbeiten
-### ComfyUI und Dashboard per SSH-Tunnel öffnen
+### Dashboard über den RunPod-Proxy öffnen
+RunPod → Pod → Connect → bei „HTTP Services“ Port 8000 anklicken, oder direkt `https://<POD_ID>-8000.proxy.runpod.net` öffnen. Die Anmeldung erfolgt mit `DASHBOARD_PASSWORD`.
+
+### ComfyUI-Oberfläche und Fehlersuche per SSH-Tunnel
 1. In RunPod beim Pod → Connect → unter „SSH over exposed TCP“ die IP und den äußeren Port für Port 22 ablesen.
 2. In Windows PowerShell (IP und Port einsetzen):
    `ssh -L 8188:127.0.0.1:8188 -L 8000:127.0.0.1:8000 root@<IP> -p <Port> -i $env:USERPROFILE\.ssh\id_ed25519`
@@ -73,7 +77,7 @@ Welche LoRAs der Pod beim Start lädt, steht in `pod/loras.toml`. Eingetragen wi
 In der SSH-Sitzung auf dem Pod:
 ```
 cd /workspace/dreamdeck && git pull
-pkill -f "uvicorn dashboard.app"; env -u CIVITAI_TOKEN nohup /workspace/venv-dashboard/bin/uvicorn dashboard.app:app --app-dir /workspace/dreamdeck --host 127.0.0.1 --port 8000 > /workspace/logs/dashboard.log 2>&1 &
+pkill -f "uvicorn dashboard.app"; env -u CIVITAI_TOKEN nohup /workspace/venv-dashboard/bin/uvicorn dashboard.app:app --app-dir /workspace/dreamdeck --host 0.0.0.0 --port 8000 > /workspace/logs/dashboard.log 2>&1 &
 ```
 Hinweis: Das gilt für Änderungen am Dashboard. Änderungen an `pod/start.sh` oder den Modell-Listen brauchen weiterhin einen neuen Pod.
 

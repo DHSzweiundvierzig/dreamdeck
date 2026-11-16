@@ -80,6 +80,7 @@
 - **15.11.2026 – Entwicklungsablauf in Etappe 2**
   - Getestet wird wie in Etappe 1: Vorlage `dreamdeck` mit `DREAMDECK_BRANCH=etappe-2`, neuer Code = neuer Pod. Nach der Abnahme mergen und die Vorlage wieder mit `main` anlegen. Grund: kein Zusatzwerkzeug nötig (update.sh verworfen).
   - Das Dashboard lauscht bis Schritt 2j nur auf 127.0.0.1, der Zugriff läuft per SSH-Tunnel. Grund: nichts öffentlich, solange der Passwortschutz fehlt.
+  - 16.11.2026 – 2n: Dashboard lauscht auf 0.0.0.0, erreichbar über den RunPod-Proxy (HTTPS, Cloudflare, 100-s-Grenze passt: /api/generate antwortet sofort, SSE pingt alle 15 s). Öffentlich nur Port 8000 per Proxy und 22 per TCP; ComfyUI bleibt auf 127.0.0.1. SSH-Tunnel bleibt als Zugang für Fehlersuche. Login-Sperre gilt global, bewusst akzeptiert (starkes Passwort).
   - Reihenfolge je Schritt: Umsetzung → Commit + Sync → neuer Pod → Browser-Kontrolle; Befunde als weiterer Commit. Grund: Der Pod holt den Code aus GitHub.
   - Zeitstempel im Dateinamen in Europe/Berlin, gesetzt vom Backend. Grund: unabhängig von der Zeitzone von Browser und Pod.
 - **15.11.2026 – Dashboard in eigener venv, alle Pakete fest gepinnt** – Grund: FastAPI und ComfyUI teilen Pakete (z. B. pydantic); ein ComfyUI-Update soll das Dashboard nicht verschieben und umgekehrt. Pins inkl. Unterabhängigkeiten in `dashboard/requirements.txt`, nur Versionen mit mind. 14 Tagen Alter. Port 8000 (`DASHBOARD_PORT` in `pod/paths.env`).

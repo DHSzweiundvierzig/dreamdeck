@@ -85,7 +85,7 @@ step_secure_repo() {
 step_check_secrets() {
     local name
     local missing=0
-    for name in CIVITAI_TOKEN DREAMDECK_DRIVE_TOKEN DREAMDECK_DRIVE_CLIENT_ID DREAMDECK_DRIVE_CLIENT_SECRET; do
+    for name in CIVITAI_TOKEN DREAMDECK_DRIVE_TOKEN DREAMDECK_DRIVE_CLIENT_ID DREAMDECK_DRIVE_CLIENT_SECRET DASHBOARD_PASSWORD; do
         if [ -n "${!name:-}" ]; then
             log "Secret $name: gesetzt"
         else
@@ -260,10 +260,11 @@ step_start_comfyui() {
     wait_for_http "ComfyUI auf 127.0.0.1:$COMFY_PORT" "$pid" "http://127.0.0.1:$COMFY_PORT/system_stats" 180 "$LOG_DIR/comfyui.log"
 }
 
-# Sync-Schleife (pod/sync.sh loop) im Hintergrund starten, ohne CIVITAI_TOKEN.
+# Sync-Schleife (pod/sync.sh loop) im Hintergrund starten, ohne CIVITAI_TOKEN
+# und ohne DASHBOARD_PASSWORD (beides braucht sie nicht).
 # Protokoll: sync.log (gemeinsam mit rclone).
 step_start_sync() {
-    env -u CIVITAI_TOKEN nohup bash "$REPO_DIR/pod/sync.sh" loop >> "$LOG_DIR/sync.log" 2>&1 &
+    env -u CIVITAI_TOKEN -u DASHBOARD_PASSWORD nohup bash "$REPO_DIR/pod/sync.sh" loop >> "$LOG_DIR/sync.log" 2>&1 &
     log "Sync-Schleife gestartet (PID $!), Protokoll: $LOG_DIR/sync.log"
 }
 
@@ -279,16 +280,18 @@ step_install_dashboard() {
     "$DASHBOARD_VENV/bin/pip" install --no-cache-dir -r "$REPO_DIR/dashboard/requirements.txt" || return 1
 }
 
-# Dashboard im Hintergrund starten, nur auf 127.0.0.1, ohne CIVITAI_TOKEN.
+# Dashboard im Hintergrund starten, ohne CIVITAI_TOKEN. Lauscht auf allen
+# Schnittstellen (0.0.0.0), erreichbar über den RunPod-Proxy (nur Port 8000 ist
+# als HTTP-Port freigegeben), geschützt durch DASHBOARD_PASSWORD.
 # --app-dir statt Verzeichniswechsel. Wartet höchstens 30 s auf /api/health.
 step_start_dashboard() {
     local pid
     env -u CIVITAI_TOKEN nohup "$DASHBOARD_VENV/bin/uvicorn" dashboard.app:app --app-dir "$REPO_DIR" \
-        --host 127.0.0.1 --port "$DASHBOARD_PORT" > "$LOG_DIR/dashboard.log" 2>&1 &
+        --host 0.0.0.0 --port "$DASHBOARD_PORT" > "$LOG_DIR/dashboard.log" 2>&1 &
     pid=$!
     log "Dashboard gestartet (PID $pid), Protokoll: $LOG_DIR/dashboard.log"
 
-    wait_for_http "Dashboard auf 127.0.0.1:$DASHBOARD_PORT" "$pid" "http://127.0.0.1:$DASHBOARD_PORT/api/health" 30 "$LOG_DIR/dashboard.log"
+    wait_for_http "Dashboard auf Port $DASHBOARD_PORT" "$pid" "http://127.0.0.1:$DASHBOARD_PORT/api/health" 30 "$LOG_DIR/dashboard.log"
 }
 
 # --- Ablauf -------------------------------------------------------------
