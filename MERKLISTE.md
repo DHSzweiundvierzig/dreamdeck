@@ -30,7 +30,7 @@
   - [x] 1p ANLEITUNG: Hinweise zum Bearbeiten der Vorlage und zum Drive-Ordner nach Client-Wechsel
 
 ## Etappe 2 – Dashboard-MVP
-- [ ] Dashboard-MVP – Unterschritte:
+- [x] Dashboard-MVP – Unterschritte:
   - [x] 2a Merkliste und Doku für Etappe 2 neu gegliedert
   - [x] 2b Backend-Gerüst: FastAPI, requirements.txt mit festen Versionen, liest pod/paths.env, Startseite, /api/health
   - [x] 2c Pod: start.sh installiert die Abhängigkeiten und startet das Dashboard (nur 127.0.0.1), ANLEITUNG zum SSH-Tunnel – erster Pod-Test (bestanden am 15.11.2026)
@@ -44,10 +44,10 @@
   - [x] 2l Korrektur: Live-Verbindung nur bei sichtbarem Tab oder laufendem Auftrag (Chrome-Grenze 6 Verbindungen) – Stresstest mit 10 Tabs bestanden am 15.11.2026
   - [x] 2m Verlauf vom Pod: GET /api/verlauf (neueste 60 aus dem Output-Ordner), Oberfläche lädt beim Start und beim Sichtbarwerden – Pod-/Browser-Test bestanden am 16.11.2026
   - [x] 2j Passwortschutz (DASHBOARD_PASSWORD): Login-Seite, Sitzungs-Cookie, Schutz aller Wege außer /api/health – Pod-/Browser-Test bestanden am 16.11.2026
-  - [ ] 2n Dashboard über den RunPod-Proxy (0.0.0.0, HTTP-Port 8000), DASHBOARD_PASSWORD in der Secrets-Prüfung, Sync-Schleife ohne Passwort
-  - [ ] 2o RunPod-Dienste: auf dem Pod prüfen, was /start.sh startet (Jupyter, nginx, sshd, Web-Terminal), und entscheiden, was abgeschaltet wird
-  - [ ] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen und Vorlage wieder mit DREAMDECK_BRANCH=main anlegen
-- [ ] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden – dabei beachten: RunPod exportiert alle Secrets auch in SSH- und Web-Terminal-Sitzungen (→ 2o)
+  - [x] 2n Dashboard über den RunPod-Proxy (0.0.0.0, HTTP-Port 8000), DASHBOARD_PASSWORD in der Secrets-Prüfung, Sync-Schleife ohne Passwort – Pod-/Browser-Test bestanden am 16.11.2026 (Proxy, SSE über 3 min ohne Abbruch, -8188 = 404, Sync ohne Passwort)
+  - [x] 2o RunPod-Dienste: auf dem Pod prüfen, was /start.sh startet (Jupyter, nginx, sshd, Web-Terminal), und entscheiden, was abgeschaltet wird – entschieden am 16.11.2026: nichts abschalten (siehe NOTIZEN)
+  - [x] 2k Abnahme auf RunPod: PsyDreamer-Bild ohne ComfyUI-Oberfläche, danach etappe-2 nach main mergen und Vorlage wieder mit DREAMDECK_BRANCH=main anlegen – Abnahme bestanden am 16.11.2026 (PsyDreamer-Bild über den Proxy, ohne ComfyUI-Oberfläche); Merge nach main und neue Vorlage im Anschluss
+- [x] Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden – dabei beachten: RunPod exportiert alle Secrets auch in SSH- und Web-Terminal-Sitzungen (→ 2o) – entschieden in 2o
 - [x] Dashboard liest Pfade und Port aus pod/paths.env (→ 2b)
 - [x] Zeitzone für Datum/Uhrzeit im Dateinamen festlegen (ComfyUI-Oberfläche nutzt die Ortszeit des Browsers) – entschieden: Europe/Berlin, Umsetzung in 2d
 

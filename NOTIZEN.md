@@ -93,3 +93,7 @@
   - Bremse: 1 s Wartezeit nach falschem Passwort, unter einer Sperre (nur ein Versuch zur Zeit).
   - Cookie `dd_sitzung`: HttpOnly, Secure, SameSite=Strict, 12 h. Sitzungen nur im Speicher, Dashboard-Neustart = neu anmelden.
   - ComfyUI erbt `DASHBOARD_PASSWORD` nicht (`env -u` in start.sh).
+- **16.11.2026 – 2o: RunPod-Dienste bleiben, nichts wird abgeschaltet**
+  - Geprüft auf dem Pod (ps, ss -tlnp): Jupyter läuft nicht. sshd auf 22 (nur Schlüssel), Web-Terminal (gotty, Port 19123) startet erst auf Anforderung aus der RunPod-Konsole, nginx lauscht auf 3001, 7270, 7861, 8001, 8081, 9091 (RunPods Standard-Weiterleitungen für Vorlagen-Dienste).
+  - Von außen erreichbar sind nur die Ports der Vorlage: 8000 per HTTP-Proxy (Dashboard, Passwort) und 22 per TCP (SSH, Schlüssel). nginx-Ports und ComfyUI (127.0.0.1:8188) sind nicht erreichbar; Proxy-Test auf -8188 ergab 404.
+  - Grund: kein Gewinn nach außen; nginx nur per pkill nach /start.sh zu beenden, mit unklaren Nebenwirkungen; SSH und Web-Terminal werden für Fehlersuche gebraucht. Secrets in SSH-/Terminal-Sitzungen bleiben bewusst akzeptiert (Zugang = root).

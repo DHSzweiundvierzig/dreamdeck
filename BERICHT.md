@@ -1,16 +1,13 @@
-# Bericht – Etappe 2 · Schritt 2n: Dashboard über den RunPod-Proxy
+# Bericht – Etappe 2 · Schritt 2o: RunPod-Dienste entschieden, Etappe 2 abgenommen
 
 ## Änderungen je Datei
-- `pod/start.sh`:
-  - `step_start_dashboard`: `--host 0.0.0.0` statt `127.0.0.1`; Kommentar angepasst (alle Schnittstellen, RunPod-Proxy, nur Port 8000 als HTTP-Port, geschützt durch DASHBOARD_PASSWORD). `wait_for_http` prüft weiter `http://127.0.0.1:$DASHBOARD_PORT/api/health`, Name jetzt „Dashboard auf Port $DASHBOARD_PORT“.
-  - `step_check_secrets`: DASHBOARD_PASSWORD hinter DREAMDECK_DRIVE_CLIENT_SECRET aufgenommen.
-  - `step_start_sync`: `env -u CIVITAI_TOKEN -u DASHBOARD_PASSWORD`, Kommentar angepasst.
-  - `step_start_comfyui` unverändert (bleibt auf 127.0.0.1).
-- `ANLEITUNG.md`: Vorlage Punkt 4 (HTTP-Port 8000, TCP 22, Hinweis auf DASHBOARD_PORT); neuer Unterabschnitt „Dashboard über den RunPod-Proxy öffnen“ vor dem SSH-Tunnel, dieser umbenannt in „ComfyUI-Oberfläche und Fehlersuche per SSH-Tunnel“ (Inhalt unverändert); Neustart-Befehl mit `--host 0.0.0.0`, `env -u CIVITAI_TOKEN` unverändert.
-- `NOTIZEN.md`: Eintrag 16.11.2026 – 2n unter der 2j-Zeile (die Zeile selbst bleibt stehen).
-- `ARCHITEKTUR.md`: Satz „lauscht auf 0.0.0.0:8000, erreichbar über den RunPod-Proxy, geschützt durch DASHBOARD_PASSWORD“ ergänzt; dafür den nun falschen Halbsatz „bis zur Freigabe lauscht das Dashboard nur auf 127.0.0.1 (Zugriff per SSH-Tunnel)“ ersetzt.
-- `MERKLISTE.md`: 2j abgehakt, 2n umbenannt (offen), 2o neu (offen), Verweis bei den RunPod-Diensten auf „→ 2o“.
+- `NOTIZEN.md`: Eintrag 16.11.2026 – 2o am Ende angefügt (Prüfung auf dem Pod, Erreichbarkeit, Gründe für „nichts abschalten“).
+- `MERKLISTE.md`:
+  - Oberpunkt „Dashboard-MVP – Unterschritte“ abgehakt.
+  - 2n, 2o und 2k abgehakt, jeweils mit Ergebnis-Zusatz vom 16.11.2026.
+  - Punkt „Entscheiden, ob RunPod-Dienste (Jupyter, SSH) abgeschaltet werden“ abgehakt (entschieden in 2o).
+- Kein Code geändert.
 
 ## Prüfung
-- `bash -n pod/start.sh`: ohne Fehler.
-- Noch offen: Test auf dem Pod (Proxy-Adresse, Login, ComfyUI nicht von außen erreichbar).
+- Nur Doku; keine Tests nötig.
+- Offen: Merge von etappe-2 nach main und neue Vorlage mit `DREAMDECK_BRANCH=main` (laut 2k, nicht Teil dieses Schritts).
