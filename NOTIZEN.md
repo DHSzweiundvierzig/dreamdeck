@@ -84,3 +84,11 @@
   - Zeitstempel im Dateinamen in Europe/Berlin, gesetzt vom Backend. Grund: unabhängig von der Zeitzone von Browser und Pod.
 - **15.11.2026 – Dashboard in eigener venv, alle Pakete fest gepinnt** – Grund: FastAPI und ComfyUI teilen Pakete (z. B. pydantic); ein ComfyUI-Update soll das Dashboard nicht verschieben und umgekehrt. Pins inkl. Unterabhängigkeiten in `dashboard/requirements.txt`, nur Versionen mit mind. 14 Tagen Alter. Port 8000 (`DASHBOARD_PORT` in `pod/paths.env`).
 - **15.11.2026 – 2m: Verlauf kommt vom Pod (statt localStorage)** – `GET /api/verlauf` liefert die neuesten 60 Bilder aus dem Output-Ordner, sortiert nach Änderungszeit, alle Bilder (nicht nur DreamDeck-Dateinamen). Die Oberfläche führt Pod-Liste und Sitzung nach `src` zusammen (bekannte Einträge behalten ihre `promptId` und damit die volle Info-Karte). Grund: alle Tabs zeigen denselben Verlauf, auch nach Neuladen. Grenze: zeigt nur Bilder seit Pod-Start; dauerhafte Quelle ist das Drive (Etappe 3).
+- **16.11.2026 – 2j Passwortschutz**
+  - Eigene Sitzung mit der Standardbibliothek statt SessionMiddleware. Grund: SessionMiddleware bräuchte das Paket itsdangerous.
+  - Login per JSON statt Formular. Grund: Formulardaten bräuchten python-multipart.
+  - Reine ASGI-Middleware als einziger Prüfpunkt. Grund: `@app.middleware("http")` verträgt sich nicht mit dem SSE-Strom.
+  - `/api/health` bleibt offen, weil start.sh darauf wartet.
+  - Bremse: 1 s Wartezeit nach falschem Passwort, unter einer Sperre (nur ein Versuch zur Zeit).
+  - Cookie `dd_sitzung`: HttpOnly, Secure, SameSite=Strict, 12 h. Sitzungen nur im Speicher, Dashboard-Neustart = neu anmelden.
+  - ComfyUI erbt `DASHBOARD_PASSWORD` nicht (`env -u` in start.sh).

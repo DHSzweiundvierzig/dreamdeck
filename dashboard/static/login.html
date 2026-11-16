@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DreamDeck – Anmelden</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/dreamdeck.css">
+  <style>
+    /* Kleines eigenes Layout: eine Karte in der Mitte der Seite */
+    html { height: 100%; }
+    body { align-items: center; justify-content: center; padding: 16px; }
+    .login { width: 100%; max-width: 360px; padding: 24px; }
+    .login .dd-brand { margin: 0 0 20px; }
+    .login .dd-generate { width: 100%; min-height: 48px; margin: 14px 0 0; font-size: 17px; }
+  </style>
+</head>
+<body>
+
+  <main class="dd-panel login">
+    <div class="dd-brand">
+      <svg class="dd-logo" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+        <circle class="dd-logo__cyan" cx="15" cy="15" r="13"/>
+        <polygon class="dd-logo__magenta" points="15,5 23.7,20 6.3,20"/>
+        <polygon class="dd-logo__cyan" points="15,25 6.3,10 23.7,10"/>
+      </svg>
+      <span>Dream<span class="dd-brand__accent">Deck</span></span>
+    </div>
+
+    <!-- Kein Absenden an den Server: das Script unten schickt die Anmeldung als JSON. -->
+    <form id="login-form">
+      <label class="dd-fieldlabel" for="login-password">Passwort</label>
+      <input class="dd-input" id="login-password" type="password"
+             autocomplete="current-password" maxlength="200" required autofocus>
+      <button class="dd-generate" id="login-button" type="submit">Anmelden</button>
+      <p class="dd-message dd-message--err" id="login-message" role="alert"></p>
+    </form>
+  </main>
+
+  <script>
+    (() => {
+      const form = document.getElementById("login-form");
+      const field = document.getElementById("login-password");
+      const button = document.getElementById("login-button");
+      const message = document.getElementById("login-message");
+
+      // Enter und Knopf lösen beide dieses Ereignis aus.
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (button.disabled || !field.value) return;
+        button.disabled = true;
+        message.textContent = "";
+        let error = "Dashboard nicht erreichbar";
+        try {
+          const response = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ passwort: field.value }),
+          });
+          if (response.ok) {
+            location.href = "/";
+            return;
+          }
+          error = "Anmeldung fehlgeschlagen";
+          const data = await response.json();
+          if (typeof data.fehler === "string") error = data.fehler;
+        } catch {
+          // Netzfehler oder keine JSON-Antwort: die vorbelegte Meldung bleibt stehen.
+        }
+        message.textContent = error;
+        field.value = "";
+        button.disabled = false;
+        field.focus();
+      });
+    })();
+  </script>
+</body>
+</html>

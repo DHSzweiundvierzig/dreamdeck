@@ -22,12 +22,14 @@ CIVITAI_TOKEN={{ RUNPOD_SECRET_CIVITAI_TOKEN }}
 DREAMDECK_DRIVE_TOKEN={{ RUNPOD_SECRET_DREAMDECK_DRIVE_TOKEN }}
 DREAMDECK_DRIVE_CLIENT_ID={{ RUNPOD_SECRET_DREAMDECK_DRIVE_CLIENT_ID }}
 DREAMDECK_DRIVE_CLIENT_SECRET={{ RUNPOD_SECRET_DREAMDECK_DRIVE_CLIENT_SECRET }}
+DASHBOARD_PASSWORD={{ RUNPOD_SECRET_DASHBOARD_PASSWORD }}
 DREAMDECK_BRANCH=main
 PUBLIC_KEY=ssh-ed25519 AAAA... (eigene Zeile, siehe unten)
 ```
 
    Hinweise:
    - `PUBLIC_KEY` = Inhalt der Datei `id_ed25519.pub` (öffentlicher Schlüssel, kein Geheimnis). Ohne ihn startet RunPod keinen SSH-Dienst und Port 22 bleibt zu. In die Zwischenablage holen mit `Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub | Set-Clipboard`. Nie die Datei `id_ed25519` ohne Endung verwenden (privater Schlüssel).
+   - `DASHBOARD_PASSWORD`: Das Secret `DASHBOARD_PASSWORD` vorher in RunPod unter Secrets anlegen (selbst gewähltes Passwort fürs Dashboard). Ohne dieses Secret ist keine Anmeldung am Dashboard möglich.
    - `DREAMDECK_BRANCH`: für Tests vor dem Merge den Branch-Namen eintragen, z. B. `etappe-1`. Der Pod holt den Code nur beim Start. Neuer Stand auf dem Branch → neuen Pod starten.
    - `MODEL_SETS` (optional): Standard `basis fp16`; für fp8 `basis fp8` eintragen (ohne Anführungszeichen eintragen). Nie beide FLUX-Sets zusammen.
    - Die Secrets werden als Verweise angezeigt (lila); die Werte setzt RunPod erst beim Start ein.
@@ -64,6 +66,7 @@ Welche LoRAs der Pod beim Start lädt, steht in `pod/loras.toml`. Eingetragen wi
    `ssh -L 8188:127.0.0.1:8188 -L 8000:127.0.0.1:8000 root@<IP> -p <Port> -i $env:USERPROFILE\.ssh\id_ed25519`
    Beim ersten Mal die Frage nach dem Vertrauen mit `yes` beantworten.
 3. Fenster offen lassen. Im Browser: Dashboard `http://localhost:8000`, ComfyUI `http://localhost:8188`.
+   Das Dashboard fragt nach dem Passwort (`DASHBOARD_PASSWORD`). Die Anmeldung gilt 12 Stunden bzw. bis zum Neustart des Dashboards.
 4. Zum Beenden in der SSH-Sitzung `exit`; damit ist auch der Tunnel zu.
 
 #### Neuen Code ohne neuen Pod holen

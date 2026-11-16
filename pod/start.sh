@@ -245,13 +245,14 @@ except Exception:
 }
 
 # ComfyUI im Hintergrund starten, nur auf 127.0.0.1 erreichbar (--listen wird
-# bewusst ausdrücklich gesetzt), ohne CIVITAI_TOKEN (wird nicht geerbt). Bilder
+# bewusst ausdrücklich gesetzt), ohne CIVITAI_TOKEN und DASHBOARD_PASSWORD
+# (werden nicht geerbt). Bilder
 # liegen außerhalb des ComfyUI-Ordners, weil ein Versionswechsel diesen Ordner
 # löscht. Wartet höchstens 180 s, bis /system_stats antwortet.
 step_start_comfyui() {
     local pid
     mkdir -p "$OUTPUT_DIR" || return 1
-    env -u CIVITAI_TOKEN nohup python3 "$COMFY_DIR/main.py" --listen 127.0.0.1 --port "$COMFY_PORT" \
+    env -u CIVITAI_TOKEN -u DASHBOARD_PASSWORD nohup python3 "$COMFY_DIR/main.py" --listen 127.0.0.1 --port "$COMFY_PORT" \
         --output-directory "$OUTPUT_DIR" > "$LOG_DIR/comfyui.log" 2>&1 &
     pid=$!
     log "ComfyUI gestartet (PID $pid), Protokoll: $LOG_DIR/comfyui.log"

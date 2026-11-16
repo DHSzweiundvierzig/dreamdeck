@@ -267,7 +267,7 @@ document.addEventListener("alpine:init", () => {
       if (this.loraState === "laedt") return;
       this.loraState = "laedt";
       try {
-        const response = await fetch("/api/loras", { cache: "no-store" });
+        const response = await this.apiFetch("/api/loras", { cache: "no-store" });
         const data = await response.json();
         if (!response.ok || !Array.isArray(data.loras)) throw new Error("keine Liste");
         this.loraFiles = data.loras;
@@ -394,7 +394,7 @@ document.addEventListener("alpine:init", () => {
 
       this.busy = true;
       try {
-        const response = await fetch("/api/generate", {
+        const response = await this.apiFetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -518,7 +518,7 @@ document.addEventListener("alpine:init", () => {
       if (this.historyLoading) return;
       this.historyLoading = true;
       try {
-        const response = await fetch("/api/verlauf", { cache: "no-store" });
+        const response = await this.apiFetch("/api/verlauf", { cache: "no-store" });
         if (!response.ok) return;
         const data = await response.json();
         if (!data || !Array.isArray(data.bilder)) return;
@@ -604,10 +604,21 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
+    // Einziger Weg für alle fetch-Aufrufe der Oberfläche: ohne gültige
+    // Anmeldung (401) geht es zur Login-Seite.
+    async apiFetch(url, options) {
+      const response = await fetch(url, options);
+      if (response.status === 401) {
+        location.href = "/login.html";
+        throw new Error("nicht angemeldet");
+      }
+      return response;
+    },
+
     // Fragt das Backend, ob ComfyUI erreichbar ist.
     async checkHealth() {
       try {
-        const response = await fetch("/api/health", { cache: "no-store" });
+        const response = await this.apiFetch("/api/health", { cache: "no-store" });
         const data = await response.json();
         this.comfy = response.ok && data.comfyui === true ? "ok" : "aus";
       } catch (error) {
