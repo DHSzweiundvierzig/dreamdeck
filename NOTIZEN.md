@@ -100,3 +100,9 @@
 - **18.11.2026 – 3a: Eigener PNG-Parser statt Pillow, Erkennung über class_type**
   - `meta.py` liest die PNG-Chunks selbst (nur struct und zlib). Grund: keine neue Abhängigkeit, und der Parser kommt mit abgeschnittenen Daten klar – in 3b reichen die ersten KB aus dem Drive.
   - Einstellungen werden über `class_type` der Knoten rekonstruiert, nicht über `_meta.title`. Grund: funktioniert auch bei fremden Workflows und alten 1.0-Bildern.
+- **18.11.2026 – 3b: Galerie liest live aus dem Drive per rclone**
+  - Kein Download beim Pod-Start. Grund: Der Start bleibt schnell, und es braucht keinen Platz auf dem Pod. Die Liste enthält nur Namen, das große Bild kommt erst beim Abruf.
+  - Einzelne rclone-Aufrufe (`drive.py`) statt `rclone rcd`. Grund: einfacher zu verstehen und zu warten; `rcd` erst, wenn es zu langsam wird. Bremse: höchstens vier Aufrufe gleichzeitig, Bildliste 60 s zwischengespeichert.
+  - Drive-Rückfall in den bestehenden Endpunkten `/api/bild` und `/api/bild/info` statt neuer Endpunkte. Grund: `imageUrl` bleibt die einzige Stelle für Bildadressen.
+  - Ordner `_vorschau/` ist reserviert für die Vorschaubilder (3c) und kommt nicht in die Bildliste.
+  - Archiv-Prinzip (3g): große Bilder wandern später vom Drive aufs NAS, das Vorschaubild mit Metadaten bleibt im Drive; die Galerie zeigt archivierte Bilder mit Hinweis statt großem Bild. Das NAS-rclone braucht dieselbe Client-ID (Scope drive.file).

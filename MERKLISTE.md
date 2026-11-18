@@ -70,12 +70,13 @@
 - [ ] Galerie & Metadaten
   - [x] 3a Info-Karte aus den PNG-Metadaten (Auslese-Baustein, kein Drive)
   - [ ] 3b Galerie-Backend: Bildliste + Metadaten aus Google Drive
-  - [ ] 3c Galerie-Ansicht im Reiter „Galerie“ mit Vorschaubildern (großes Bild erst beim Anklicken, Vorschaubilder auch im Drive ablegen)
+  - [ ] 3c Galerie-Ansicht im Reiter „Galerie“ mit Vorschaubildern (großes Bild erst beim Anklicken, Vorschaubilder auch im Drive ablegen) – Vorschaubilder erzeugt ComfyUI im Workflow (Verkleinern + eigener Speichern-Knoten) als PNG mit Metadaten, gleicher Dateiname wie das große Bild, Ordner _vorschau/JJJJ-MM/
   - [ ] 3d Favoriten: Stern auf Kachel/Info-Karte, Merkdatei im Drive
   - [ ] 3e Suche/Filter (u. a. nur Favoriten)
   - [ ] 3f Knöpfe „Remix“ (Einstellungen in die Prompt-Leiste, ersetzt „Als Rezept“) und „Variante“ (neuer Seed, startet sofort)
+  - [ ] 3g Archiv: große Bilder vom Drive aufs NAS auslagern, Vorschaubild (mit Metadaten) bleibt im Drive; Galerie zeigt archivierte Bilder mit Hinweis statt großem Bild. NAS-rclone braucht dieselbe Client-ID (Scope drive.file).
 - [ ] Metadaten alter Bilder auslesen (welche LoRAs waren dabei?) (→ 3a)
-- [ ] Galerie liest Bilder aus Google Drive (Output-Ordner ist mit dem Pod weg) – Weg klären: live per rclone oder beim Pod-Start holen (→ 3b)
+- [ ] Galerie liest Bilder aus Google Drive (Output-Ordner ist mit dem Pod weg) – Weg klären: live per rclone oder beim Pod-Start holen (entschieden: live per rclone → 3b)
 
 ## Etappe 4 – Prompt-Werkstatt
 - [ ] Prompt-Werkstatt
@@ -99,3 +100,4 @@
 - [ ] Vergleich fp8 gegen fp16
 - [ ] Speicher im Blick behalten, bevor weitere Modelle dazukommen (Testlauf: Disk 36 von 50 GB, RAM-Spitze 78 % beim Laden)
 - [ ] RunPod-MCP prüfen (nur nach ausdrücklicher Freigabe)
+- [ ] Einstellungs-Oberfläche (z. B. Drive-Ziel ändern), im Dashboard oder beim Pod-Start

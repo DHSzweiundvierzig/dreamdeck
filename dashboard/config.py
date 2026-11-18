@@ -30,5 +30,10 @@ REPO_DIR = _env["REPO_DIR"]
 OUTPUT_DIR = _env["OUTPUT_DIR"]
 COMFY_PORT = int(_env["COMFY_PORT"])
 DASHBOARD_PORT = int(_env["DASHBOARD_PORT"])
+RCLONE_CONF = _env["RCLONE_CONF"]
+RCLONE_REMOTE = _env["RCLONE_REMOTE"]
+DRIVE_FOLDER = _env["DRIVE_FOLDER"]
+# Bild-Endungen für Output-Ordner und Drive; der Ordner „_vorschau“ ist für Vorschaubilder reserviert.
+IMAGE_SUFFIXES = (".png", ".webp", ".jpg", ".jpeg")
 COMFY_URL = f"http://127.0.0.1:{COMFY_PORT}"
 COMFY_WS_URL = f"ws://127.0.0.1:{COMFY_PORT}/ws"

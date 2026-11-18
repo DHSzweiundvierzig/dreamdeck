@@ -4,20 +4,25 @@ import contextlib
 import hashlib
 import hmac
 import json
+import mimetypes
 import os
+import re
 import secrets
 import time
+from datetime import datetime, timezone
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .config import COMFY_URL, OUTPUT_DIR
+from . import drive
+from .config import COMFY_URL, IMAGE_SUFFIXES, OUTPUT_DIR
+from .drive import DriveFehler
 from .events import EventHub, listen_comfyui
 from .meta import lese_einstellungen, lese_png_texte
 from .workflow import build_flux_workflow
@@ -250,7 +255,6 @@ async def events(request: Request):
     )
 
 
-IMAGE_SUFFIXES = (".png", ".webp", ".jpg", ".jpeg")
 # Höchstzahl der Bilder im Verlauf (/api/verlauf)
 HISTORY_LIMIT = 60
 # So viele Bytes vom Dateianfang genügen für die PNG-Textchunks (/api/bild/info)
@@ -274,34 +278,97 @@ async def image(
     datei: str = Query(..., min_length=1, max_length=200),
     ordner: str = Query("", max_length=200),
 ):
-    """Liefert ein fertiges Bild aus dem Output-Ordner.
+    """Liefert ein fertiges Bild aus dem Output-Ordner, sonst aus dem Drive.
 
     datei und ordner kommen aus dem Ereignis „fertig" (Felder datei/ordner).
-    Schutz gegen ../ und absolute Pfade durch resolve + is_relative_to.
+    Lokal: Schutz gegen ../ und absolute Pfade durch resolve + is_relative_to.
+    Drive: Namensprüfung in drive.pruefe_name.
     """
+    headers = {"Cache-Control": "private, max-age=86400"}
     target = _bild_pfad(datei, ordner)
-    if target is None:
+    if target is not None:
+        return FileResponse(target, headers=headers)
+    if drive.pruefe_name(ordner, datei) is None:
         return JSONResponse({"fehler": "Bild nicht gefunden"}, status_code=404)
-    return FileResponse(target, headers={"Cache-Control": "private, max-age=86400"})
+    try:
+        data = await drive.bild(ordner, datei)
+    except DriveFehler as exc:
+        return _drive_fehler(exc)
+    media_type = mimetypes.guess_type(datei)[0] or "application/octet-stream"
+    return Response(data, media_type=media_type, headers=headers)
+
+
+def _drive_fehler(exc: DriveFehler) -> JSONResponse:
+    """404, wenn die Datei im Drive fehlt, sonst 502."""
+    if exc.nicht_gefunden:
+        return JSONResponse({"fehler": "Bild nicht gefunden"}, status_code=404)
+    return JSONResponse({"fehler": "Drive nicht erreichbar"}, status_code=502)
+
+
+def _read_head(path: Path) -> bytes:
+    """Liest die ersten INFO_READ_BYTES Bytes einer lokalen Datei."""
+    with path.open("rb") as handle:
+        return handle.read(INFO_READ_BYTES)
+
+
+# Einstellungen je Bild („ordner/datei“); Bilder ändern sich nie, also genügt einmal lesen.
+_info_cache: dict[str, dict] = {}
 
 
 @app.get("/api/bild/info")
-def image_info(
+async def image_info(
     datei: str = Query(..., min_length=1, max_length=200),
     ordner: str = Query("", max_length=200),
 ):
     """Liefert die Einstellungen eines Bildes aus seinen PNG-Metadaten.
 
-    Liest nur die ersten 64 KB; die Textchunks stehen vor den Bilddaten.
-    Normales def, damit das Lesen im Threadpool läuft.
+    Liest nur die ersten 64 KB (lokal, sonst aus dem Drive); die Textchunks
+    stehen vor den Bilddaten.
     """
+    key = f"{ordner}/{datei}"
+    if key in _info_cache:
+        return {"datei": datei, "ordner": ordner, "einstellungen": _info_cache[key]}
     target = _bild_pfad(datei, ordner)
-    if target is None:
+    if target is not None:
+        head = await asyncio.to_thread(_read_head, target)
+    elif drive.pruefe_name(ordner, datei) is None:
         return JSONResponse({"fehler": "Bild nicht gefunden"}, status_code=404)
-    with target.open("rb") as handle:
-        head = handle.read(INFO_READ_BYTES)
+    else:
+        try:
+            head = await drive.kopf(ordner, datei, INFO_READ_BYTES)
+        except DriveFehler as exc:
+            return _drive_fehler(exc)
     settings = lese_einstellungen(lese_png_texte(head))
+    _info_cache[key] = settings
     return {"datei": datei, "ordner": ordner, "einstellungen": settings}
+
+
+def _lokale_bilder() -> list[dict]:
+    """Alle Bilder im Output-Ordner als {datei, ordner, zeit}; „_vorschau/“ wird übersprungen.
+
+    zeit ist die Änderungszeit als UTC-Text (JJJJ-MM-TTThh:mm:ss.ffffff), sortierbar.
+    Blockierend – im Threadpool aufrufen.
+    """
+    base = Path(OUTPUT_DIR).resolve()
+    if not base.is_dir():
+        return []
+    images = []
+    for path in base.rglob("*"):
+        try:
+            folder = path.parent.relative_to(base).as_posix()
+            folder = "" if folder == "." else folder
+            if folder.split("/")[0] == drive.PREVIEW_FOLDER:
+                continue
+            if path.suffix.lower() in IMAGE_SUFFIXES and path.is_file():
+                mtime = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc)
+                images.append({
+                    "datei": path.name,
+                    "ordner": folder,
+                    "zeit": mtime.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+                })
+        except OSError:
+            continue  # Datei während des Durchsuchens verschwunden
+    return images
 
 
 @app.get("/api/verlauf")
@@ -311,22 +378,41 @@ def history():
     Normales def, damit das Durchsuchen im Threadpool läuft.
     Felder datei/ordner wie im Ereignis „fertig".
     """
-    base = Path(OUTPUT_DIR).resolve()
-    if not base.is_dir():
-        return {"bilder": []}
-    found = []
-    for path in base.rglob("*"):
-        try:
-            if path.suffix.lower() in IMAGE_SUFFIXES and path.is_file():
-                found.append((path.stat().st_mtime, path))
-        except OSError:
-            continue  # Datei während des Durchsuchens verschwunden
-    found.sort(key=lambda item: item[0], reverse=True)
-    images = []
-    for _, path in found[:HISTORY_LIMIT]:
-        folder = path.parent.relative_to(base).as_posix()
-        images.append({"datei": path.name, "ordner": "" if folder == "." else folder})
-    return {"bilder": images}
+    found = sorted(_lokale_bilder(), key=lambda item: item["zeit"], reverse=True)
+    return {"bilder": [{"datei": i["datei"], "ordner": i["ordner"]} for i in found[:HISTORY_LIMIT]]}
+
+
+# Datum und Uhrzeit im Dateinamen, z. B. „2026-11-18_143015“
+_NAME_TIME = re.compile(r"(\d{4}-\d{2}-\d{2})_(\d{2})(\d{2})(\d{2})")
+
+
+def _sort_time(image: dict) -> str:
+    """Sortierschlüssel (JJJJ-MM-TTThh:mm:ss): aus dem Dateinamen, sonst aus zeit."""
+    match = _NAME_TIME.search(image["datei"])
+    if match:
+        day, hour, minute, second = match.groups()
+        return f"{day}T{hour}:{minute}:{second}"
+    return image["zeit"][:19]
+
+
+@app.get("/api/galerie")
+async def gallery():
+    """Alle Bilder aus dem Drive plus lokale, noch nicht hochgeladene; neueste zuerst.
+
+    Nur Namen – die Bilder selbst holt /api/bild beim Anklicken. Ist das Drive
+    nicht erreichbar, kommen die lokalen Bilder mit "drive": "fehler".
+    """
+    status = "ok"
+    try:
+        remote = await drive.liste()
+    except DriveFehler:
+        remote, status = [], "fehler"
+    local = await asyncio.to_thread(_lokale_bilder)
+    merged = {(i["ordner"], i["datei"]): i for i in remote}
+    for image in local:
+        merged.setdefault((image["ordner"], image["datei"]), image)
+    ordered = sorted(merged.values(), key=_sort_time, reverse=True)
+    return {"bilder": [{"datei": i["datei"], "ordner": i["ordner"]} for i in ordered], "drive": status}
 
 
 # Statische Dateien zuletzt einhängen, damit die API-Routen Vorrang haben.
