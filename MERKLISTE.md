@@ -68,7 +68,7 @@
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten
-  - [ ] 3a Info-Karte aus den PNG-Metadaten (Auslese-Baustein, kein Drive)
+  - [x] 3a Info-Karte aus den PNG-Metadaten (Auslese-Baustein, kein Drive)
   - [ ] 3b Galerie-Backend: Bildliste + Metadaten aus Google Drive
   - [ ] 3c Galerie-Ansicht im Reiter „Galerie“ mit Vorschaubildern (großes Bild erst beim Anklicken, Vorschaubilder auch im Drive ablegen)
   - [ ] 3d Favoriten: Stern auf Kachel/Info-Karte, Merkdatei im Drive

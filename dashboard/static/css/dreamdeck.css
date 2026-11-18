@@ -767,6 +767,12 @@ button, textarea, input, select { font: inherit; color: inherit; }
   color: var(--dd-text);
 }
 .dd-info dd { white-space: pre-line; }
+/* Breite Zeile (Prompt): Bezeichnung oben, Wert darunter über die volle Breite, linksbündig */
+.dd-info .dd-summary__row--breit {
+  display: block;
+  grid-column: 1 / -1;
+}
+.dd-info .dd-summary__row--breit dd { text-align: left; }
 
 /* Knöpfe unter der Info-Karte im 2×2-Raster (Höhe 44px kommt von .dd-btn) */
 .dd-actions {

@@ -281,9 +281,10 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
-    // Anzeigename einer LoRA: ohne Ordnerpfad und ohne „.safetensors“.
+    // Anzeigename von Modell oder LoRA: ohne Ordnerpfad und ohne Endung
+    // (.safetensors, .ckpt, .pt, .pth; Groß-/Kleinschreibung egal).
     loraLabel(name) {
-      return name.split(/[\\/]/).pop().replace(/\.safetensors$/i, "");
+      return name.split(/[\\/]/).pop().replace(/\.(safetensors|ckpt|pt|pth)$/i, "");
     },
 
     // Stärke einer LoRA als Text mit Komma („0,80“).
@@ -610,21 +611,24 @@ document.addEventListener("alpine:init", () => {
       } else if (info === null) {
         rows.push({ k: "Einstellungen", v: "keine Metadaten" });
       } else {
-        const add = (k, v) => {
-          if (v !== null && v !== undefined && v !== "") rows.push({ k, v });
+        const add = (k, v, breit = false) => {
+          if (v !== null && v !== undefined && v !== "") rows.push({ k, v, breit });
         };
-        add("Prompt", info.prompt);
+        add("Prompt", info.prompt, true);
         add("Seed", info.seed);
         if (info.breite && info.hoehe) {
           add("Auflösung", `${info.breite} × ${info.hoehe}`);
           add("Format", this.formatName(info.breite, info.hoehe));
         }
-        add("Modell", info.modell);
+        add("Modell", info.modell ? this.loraLabel(info.modell) : info.modell);
         // Mehrere LoRAs untereinander (Zeilenumbruch, im CSS pre-line)
         add(
           "LoRAs",
           info.loras
-            .map((l) => (l.staerke === null || l.staerke === undefined ? l.name : `${l.name} · ${l.staerke}`))
+            .map((l) => {
+              const name = this.loraLabel(l.name);
+              return l.staerke === null || l.staerke === undefined ? name : `${name} · ${l.staerke}`;
+            })
             .join("\n"),
         );
         add("Steps", info.steps);
