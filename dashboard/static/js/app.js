@@ -630,11 +630,12 @@ document.addEventListener("alpine:init", () => {
               return l.staerke === null || l.staerke === undefined ? name : `${name} · ${l.staerke}`;
             })
             .join("\n"),
+          true,
         );
         add("Steps", info.steps);
         add("Guidance", info.guidance);
       }
-      rows.push({ k: "Datei", v: image.datei });
+      rows.push({ k: "Datei", v: image.datei, breit: true });
       return rows;
     },
 
