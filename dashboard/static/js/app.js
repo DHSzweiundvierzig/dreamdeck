@@ -109,6 +109,10 @@ document.addEventListener("alpine:init", () => {
     // Angaben je prompt_id, beim Absenden festgehalten (für die Info-Karte)
     jobs: {},
 
+    // Einstellungen je Bild aus den PNG-Metadaten, Schlüssel "ordner/datei".
+    // Wert: "laedt" | null (keine Metadaten) | Objekt der Einstellungen.
+    infoCache: {},
+
     // Bühne; phase: "leer" | "wartet" | "laedt" | "rechnet" | "fertig" | "fehler"
     stage: { phase: "leer", step: 0, steps: 0, error: "", image: null, promptId: null },
 
@@ -551,6 +555,35 @@ document.addEventListener("alpine:init", () => {
       this.stage.image = entry;
       this.stage.phase = "fertig";
       this.stage.error = "";
+      this.ladeInfo(entry);
+    },
+
+    // Holt die Einstellungen eines Bildes einmalig aus /api/bild/info.
+    async ladeInfo(bild) {
+      const key = this.infoKey(bild);
+      if (key in this.infoCache) return;
+      this.infoCache[key] = "laedt";
+      try {
+        const response = await fetch(this.imageUrl(bild).replace("/api/bild?", "/api/bild/info?"));
+        const data = await response.json();
+        this.infoCache[key] = response.ok ? data.einstellungen || null : null;
+      } catch (err) {
+        // Netzfehler: nicht merken, beim nächsten Anzeigen erneut versuchen
+        delete this.infoCache[key];
+      }
+    },
+
+    infoKey(bild) {
+      return (bild.ordner || "") + "/" + bild.datei;
+    },
+
+    // Name des Format-Presets zu Breite × Höhe (auch quer), sonst "eigenes".
+    formatName(width, height) {
+      const preset = this.formats.find(
+        (f) => f.w && ((f.w === width && f.h === height) || (f.w === height && f.h === width)),
+      );
+      if (!preset) return "eigenes";
+      return width > height && preset.w < preset.h ? preset.key.split(":").reverse().join(":") : preset.key;
     },
 
     // Läuft gerade ein Auftrag (wartend, ladend oder rechnend)?
@@ -566,20 +599,37 @@ document.addEventListener("alpine:init", () => {
     },
 
     // Zeilen { k, v } der Info-Karte zum Bild auf der Bühne.
-    // Fehlen Angaben zum Auftrag (fremder Tab), steht dort nur die Datei.
+    // Die Daten kommen aus den PNG-Metadaten (infoCache); die Datei steht immer da.
     get stageInfo() {
       const image = this.stage.image;
       if (!image) return [];
-      const job = this.jobs[image.promptId];
-      const rows = job
-        ? [
-            { k: "Seed", v: job.seed },
-            { k: "Auflösung", v: `${job.width} × ${job.height}` },
-            { k: "Format", v: job.format },
-            // Mehrere LoRAs untereinander (Zeilenumbruch, im CSS pre-line)
-            { k: "LoRAs", v: job.loras.length ? job.loras.join("\n") : "keine" },
-          ]
-        : [];
+      const info = this.infoCache[this.infoKey(image)];
+      const rows = [];
+      if (info === "laedt" || info === undefined) {
+        rows.push({ k: "Einstellungen", v: "lädt …" });
+      } else if (info === null) {
+        rows.push({ k: "Einstellungen", v: "keine Metadaten" });
+      } else {
+        const add = (k, v) => {
+          if (v !== null && v !== undefined && v !== "") rows.push({ k, v });
+        };
+        add("Prompt", info.prompt);
+        add("Seed", info.seed);
+        if (info.breite && info.hoehe) {
+          add("Auflösung", `${info.breite} × ${info.hoehe}`);
+          add("Format", this.formatName(info.breite, info.hoehe));
+        }
+        add("Modell", info.modell);
+        // Mehrere LoRAs untereinander (Zeilenumbruch, im CSS pre-line)
+        add(
+          "LoRAs",
+          info.loras
+            .map((l) => (l.staerke === null || l.staerke === undefined ? l.name : `${l.name} · ${l.staerke}`))
+            .join("\n"),
+        );
+        add("Steps", info.steps);
+        add("Guidance", info.guidance);
+      }
       rows.push({ k: "Datei", v: image.datei });
       return rows;
     },

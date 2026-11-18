@@ -68,8 +68,14 @@
 
 ## Etappe 3 – Galerie & Metadaten
 - [ ] Galerie & Metadaten
-- [ ] Metadaten alter Bilder auslesen (welche LoRAs waren dabei?)
-- [ ] Galerie liest Bilder aus Google Drive (Output-Ordner ist mit dem Pod weg) – Weg klären: live per rclone oder beim Pod-Start holen
+  - [ ] 3a Info-Karte aus den PNG-Metadaten (Auslese-Baustein, kein Drive)
+  - [ ] 3b Galerie-Backend: Bildliste + Metadaten aus Google Drive
+  - [ ] 3c Galerie-Ansicht im Reiter „Galerie“ mit Vorschaubildern (großes Bild erst beim Anklicken, Vorschaubilder auch im Drive ablegen)
+  - [ ] 3d Favoriten: Stern auf Kachel/Info-Karte, Merkdatei im Drive
+  - [ ] 3e Suche/Filter (u. a. nur Favoriten)
+  - [ ] 3f Knöpfe „Remix“ (Einstellungen in die Prompt-Leiste, ersetzt „Als Rezept“) und „Variante“ (neuer Seed, startet sofort)
+- [ ] Metadaten alter Bilder auslesen (welche LoRAs waren dabei?) (→ 3a)
+- [ ] Galerie liest Bilder aus Google Drive (Output-Ordner ist mit dem Pod weg) – Weg klären: live per rclone oder beim Pod-Start holen (→ 3b)
 
 ## Etappe 4 – Prompt-Werkstatt
 - [ ] Prompt-Werkstatt
@@ -82,6 +88,7 @@
 - [ ] Upscaling-Workflow
 - [ ] Bild-zu-Bild
 - [ ] Vergleichsansicht
+- [ ] Altes Bild (z. B. aus 1.0) ins Dashboard ziehen → Einstellungen per meta.py übernehmen
 - [ ] Serverless
 - [ ] Eigenes Pod-Image (schnellerer Start)
 - [ ] Spiel-ComfyUI (Fake-Bilder) für Tests auf der devbox

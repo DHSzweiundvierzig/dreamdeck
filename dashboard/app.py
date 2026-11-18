@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 from .config import COMFY_URL, OUTPUT_DIR
 from .events import EventHub, listen_comfyui
+from .meta import lese_einstellungen, lese_png_texte
 from .workflow import build_flux_workflow
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -252,6 +253,20 @@ async def events(request: Request):
 IMAGE_SUFFIXES = (".png", ".webp", ".jpg", ".jpeg")
 # Höchstzahl der Bilder im Verlauf (/api/verlauf)
 HISTORY_LIMIT = 60
+# So viele Bytes vom Dateianfang genügen für die PNG-Textchunks (/api/bild/info)
+INFO_READ_BYTES = 64 * 1024
+
+
+def _bild_pfad(datei: str, ordner: str) -> Path | None:
+    """Löst datei/ordner sicher im Output-Ordner auf; ungültig → None.
+
+    Schutz gegen ../ und absolute Pfade durch resolve + is_relative_to.
+    """
+    base = Path(OUTPUT_DIR).resolve()
+    target = (base / ordner / datei).resolve()
+    if target.is_relative_to(base) and target.is_file() and target.suffix.lower() in IMAGE_SUFFIXES:
+        return target
+    return None
 
 
 @app.get("/api/bild")
@@ -264,11 +279,29 @@ async def image(
     datei und ordner kommen aus dem Ereignis „fertig" (Felder datei/ordner).
     Schutz gegen ../ und absolute Pfade durch resolve + is_relative_to.
     """
-    base = Path(OUTPUT_DIR).resolve()
-    target = (base / ordner / datei).resolve()
-    if not (target.is_relative_to(base) and target.is_file() and target.suffix.lower() in IMAGE_SUFFIXES):
+    target = _bild_pfad(datei, ordner)
+    if target is None:
         return JSONResponse({"fehler": "Bild nicht gefunden"}, status_code=404)
     return FileResponse(target, headers={"Cache-Control": "private, max-age=86400"})
+
+
+@app.get("/api/bild/info")
+def image_info(
+    datei: str = Query(..., min_length=1, max_length=200),
+    ordner: str = Query("", max_length=200),
+):
+    """Liefert die Einstellungen eines Bildes aus seinen PNG-Metadaten.
+
+    Liest nur die ersten 64 KB; die Textchunks stehen vor den Bilddaten.
+    Normales def, damit das Lesen im Threadpool läuft.
+    """
+    target = _bild_pfad(datei, ordner)
+    if target is None:
+        return JSONResponse({"fehler": "Bild nicht gefunden"}, status_code=404)
+    with target.open("rb") as handle:
+        head = handle.read(INFO_READ_BYTES)
+    settings = lese_einstellungen(lese_png_texte(head))
+    return {"datei": datei, "ordner": ordner, "einstellungen": settings}
 
 
 @app.get("/api/verlauf")

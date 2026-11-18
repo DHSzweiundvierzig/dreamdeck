@@ -97,3 +97,6 @@
   - Geprüft auf dem Pod (ps, ss -tlnp): Jupyter läuft nicht. sshd auf 22 (nur Schlüssel), Web-Terminal (gotty, Port 19123) startet erst auf Anforderung aus der RunPod-Konsole, nginx lauscht auf 3001, 7270, 7861, 8001, 8081, 9091 (RunPods Standard-Weiterleitungen für Vorlagen-Dienste).
   - Von außen erreichbar sind nur die Ports der Vorlage: 8000 per HTTP-Proxy (Dashboard, Passwort) und 22 per TCP (SSH, Schlüssel). nginx-Ports und ComfyUI (127.0.0.1:8188) sind nicht erreichbar; Proxy-Test auf -8188 ergab 404.
   - Grund: kein Gewinn nach außen; nginx nur per pkill nach /start.sh zu beenden, mit unklaren Nebenwirkungen; SSH und Web-Terminal werden für Fehlersuche gebraucht. Secrets in SSH-/Terminal-Sitzungen bleiben bewusst akzeptiert (Zugang = root).
+- **18.11.2026 – 3a: Eigener PNG-Parser statt Pillow, Erkennung über class_type**
+  - `meta.py` liest die PNG-Chunks selbst (nur struct und zlib). Grund: keine neue Abhängigkeit, und der Parser kommt mit abgeschnittenen Daten klar – in 3b reichen die ersten KB aus dem Drive.
+  - Einstellungen werden über `class_type` der Knoten rekonstruiert, nicht über `_meta.title`. Grund: funktioniert auch bei fremden Workflows und alten 1.0-Bildern.
